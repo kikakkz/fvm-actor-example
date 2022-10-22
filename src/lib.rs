@@ -8,6 +8,11 @@ use fvm_ipld_encoding::{to_vec, CborStore, RawBytes, DAG_CBOR};
 use fvm_sdk as sdk;
 use fvm_sdk::NO_DATA_BLOCK_ID;
 use fvm_shared::ActorID;
+use fvm_shared::bigint::bigint_ser;
+use fvm_shared::econ::TokenAmount;
+use fvm_shared::sector::StoragePower;
+use fvm_shared::clock::ChainEpoch;
+use fvm_shared::smooth::FilterEstimate;
 
 /// A macro to abort concisely.
 /// This should be part of the SDK as it's very handy.
@@ -70,11 +75,19 @@ impl State {
 /// Put all methods inside an impl struct and annotate it with a derive macro
 /// that handles state serde and dispatch.
 #[no_mangle]
-pub fn invoke(_: u32) -> u32 {
+pub fn invoke(params: u32) -> u32 {
     // Conduct method dispatch. Handle input parameters and return data.
     let ret: Option<RawBytes> = match sdk::message::method_number() {
         1 => constructor(),
         2 => say_hello(),
+        3 => get_state_cid(),
+        4 => echo_raw_bytes(params),
+        5 => get_state_cid_cbor(),
+        6 => echo_cid_params(params),
+        7 => get_old_state(params),
+        8 => get_state_as_bytes(params),
+        9 => get_power_actor_state(params),
+        10 => get_current_balance(),
         _ => abort!(USR_UNHANDLED_MESSAGE, "unrecognized method"),
     };
 
@@ -127,3 +140,131 @@ pub fn say_hello() -> Option<RawBytes> {
         }
     }
 }
+
+/// Method num 3.
+pub fn get_state_cid() -> Option<RawBytes> {
+    let state_cid = sdk::sself::root().unwrap();
+    Some(RawBytes::new(state_cid.to_bytes()))
+}
+
+/// Method num 4.
+pub fn echo_raw_bytes(params: u32) -> Option<RawBytes> {
+    let params = sdk::message::params_raw(params).unwrap().1;
+    let params = RawBytes::new(params);
+
+    let ret = to_vec(format!("Params {:?}", params).as_str());
+
+    match ret {
+        Ok(ret) => Some(RawBytes::new(ret)),
+        Err(err) => {
+            abort!(
+                USR_ILLEGAL_STATE,
+                "failed to serialize return value: {:?}",
+                err
+            );
+        }
+    }
+}
+
+#[derive(Debug, Serialize_tuple, Deserialize_tuple)]
+pub struct CidParams {
+    pub cid: Cid
+}
+
+/// Method num 5.
+pub fn get_state_cid_cbor() -> Option<RawBytes> {
+    let state_cid = sdk::sself::root().unwrap();
+    let cid_for_cbor = CidParams {
+        cid: state_cid,
+    };
+    Some(RawBytes::serialize(cid_for_cbor).unwrap())
+}
+
+/// Method num 6.
+pub fn echo_cid_params(params: u32) -> Option<RawBytes> {
+    let params = sdk::message::params_raw(params).unwrap().1;
+    let params = RawBytes::new(params);
+    let params: CidParams = params.deserialize().unwrap();
+
+    let ret = to_vec(format!("Params {:?}", params).as_str());
+
+    match ret {
+        Ok(ret) => Some(RawBytes::new(ret)),
+        Err(err) => {
+            abort!(
+                USR_ILLEGAL_STATE,
+                "failed to serialize return value: {:?}",
+                err
+            );
+        }
+    }
+}
+
+/// Method num 7.
+pub fn get_old_state(params: u32) -> Option<RawBytes> {
+    let params = sdk::message::params_raw(params).unwrap().1;
+    let params = RawBytes::new(params);
+    let params: CidParams = params.deserialize().unwrap();
+    let old_state_cid = params.cid;
+
+    let old_state = Blockstore.get_cbor::<State>(&old_state_cid).unwrap();
+    Some(RawBytes::serialize(&old_state).unwrap())
+}
+
+/// Method num 8.
+pub fn get_state_as_bytes(params: u32) -> Option<RawBytes> {
+    let params = sdk::message::params_raw(params).unwrap().1;
+    let params = RawBytes::new(params);
+    let params: CidParams = params.deserialize().unwrap();
+    let old_state_cid = params.cid;
+
+    let old_state_vec = sdk::ipld::get(&old_state_cid).unwrap();
+    Some(RawBytes::new(old_state_vec))
+}
+
+/// Storage power actor state
+#[derive(Default, Serialize_tuple, Deserialize_tuple)]
+pub struct PowerActorState {
+    #[serde(with = "bigint_ser")]
+    pub total_raw_byte_power: StoragePower,
+    #[serde(with = "bigint_ser")]
+    pub total_bytes_committed: StoragePower,
+    #[serde(with = "bigint_ser")]
+    pub total_quality_adj_power: StoragePower,
+    #[serde(with = "bigint_ser")]
+    pub total_qa_bytes_committed: StoragePower,
+
+    pub total_pledge_collateral: TokenAmount,
+
+    #[serde(with = "bigint_ser")]
+    pub this_epoch_raw_byte_power: StoragePower,
+    #[serde(with = "bigint_ser")]
+    pub this_epoch_quality_adj_power: StoragePower,
+
+    pub this_epoch_pledge_collateral: TokenAmount,
+    pub this_epoch_qa_power_smoothed: FilterEstimate,
+    pub miner_count: i64,
+    pub miner_above_min_power_count: i64,
+    pub cron_event_queue: Cid,
+    pub first_cron_epoch: ChainEpoch,
+    pub claims: Cid,
+    pub proof_validation_batch: Option<Cid>,
+}
+
+/// Method num 9.
+pub fn get_power_actor_state(params: u32) -> Option<RawBytes> {
+    let params = sdk::message::params_raw(params).unwrap().1;
+    let params = RawBytes::new(params);
+    let params: CidParams = params.deserialize().unwrap();
+    let state_cid = params.cid;
+
+    let state = Blockstore.get_cbor::<PowerActorState>(&state_cid).unwrap();
+    Some(RawBytes::serialize(&state).unwrap())
+}
+
+/// Method num 10.
+pub fn get_current_balance() -> Option<RawBytes> {
+    let balance = sdk::sself::current_balance();
+    Some(RawBytes::serialize(balance.to_string()).unwrap())
+}
+
