@@ -10,9 +10,12 @@ use fvm_sdk::NO_DATA_BLOCK_ID;
 use fvm_shared::ActorID;
 use fvm_shared::bigint::bigint_ser;
 use fvm_shared::econ::TokenAmount;
-use fvm_shared::sector::StoragePower;
+use fvm_shared::sector::{RegisteredPoStProof, StoragePower};
 use fvm_shared::clock::ChainEpoch;
 use fvm_shared::smooth::FilterEstimate;
+use fvm_ipld_hamt::Hamt;
+use fvm_shared::HAMT_BIT_WIDTH;
+use fvm_shared::address::Address;
 
 /// A macro to abort concisely.
 /// This should be part of the SDK as it's very handy.
@@ -88,6 +91,7 @@ pub fn invoke(params: u32) -> u32 {
         8 => get_state_as_bytes(params),
         9 => get_power_actor_state(params),
         10 => get_current_balance(),
+        11 => get_power_actor_miners(params),
         _ => abort!(USR_UNHANDLED_MESSAGE, "unrecognized method"),
     };
 
@@ -266,5 +270,31 @@ pub fn get_power_actor_state(params: u32) -> Option<RawBytes> {
 pub fn get_current_balance() -> Option<RawBytes> {
     let balance = sdk::sself::current_balance();
     Some(RawBytes::serialize(balance.to_string()).unwrap())
+}
+
+#[derive(Debug, Serialize_tuple, Deserialize_tuple, Clone, PartialEq)]
+pub struct Claim {
+    pub window_post_proof_type: RegisteredPoStProof,
+    #[serde(with = "bigint_ser")]
+    pub raw_byte_power: StoragePower,
+    #[serde(with = "bigint_ser")]
+    pub quality_adj_power: StoragePower,
+}
+
+/// Method num 11.
+pub fn get_power_actor_miners(params: u32) -> Option<RawBytes> {
+    let params = sdk::message::params_raw(params).unwrap().1;
+    let params = RawBytes::new(params);
+    let params: CidParams = params.deserialize().unwrap();
+    let state_cid = params.cid;
+
+    let state = Blockstore.get_cbor::<PowerActorState>(&state_cid).unwrap().unwrap();
+    let claims = Hamt::<Blockstore, _>::load_with_bit_width(&state.claims, Blockstore, HAMT_BIT_WIDTH).unwrap();
+    let mut miners = Vec::new();
+    claims.for_each(|k, _: &Claim| {
+        miners.push(Address::from_bytes(&k.0)?);
+        Ok(())
+    }).ok()?;
+    Some(RawBytes::serialize(&miners).unwrap())
 }
 
