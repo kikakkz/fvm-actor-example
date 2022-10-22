@@ -12,3 +12,5 @@ base64 = "0.13.1"
 cid = { version = "0.8.4", default-features = false }
 serde = { version = "1.0.136", features = ["derive"] }
 serde_tuple = "0.5"
+fvm_sdk = { git = "https://github.com/filecoin-project/ref-fvm.git" }
+fvm_shared = { git = "https://github.com/filecoin-project/ref-fvm.git" }
