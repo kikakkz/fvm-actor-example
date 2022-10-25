@@ -10,6 +10,8 @@ use fvm_shared::bigint::bigint_ser;
 use fvm_shared::clock::ChainEpoch;
 use fvm_shared::address::Address;
 
+use num_bigint::BigInt;
+
 #[derive(Debug, Serialize_tuple, Deserialize_tuple)]
 struct CidParams {
     cid: Cid
@@ -43,15 +45,31 @@ pub struct PowerActorState {
     pub proof_validation_batch: Option<Cid>,
 }
 
+#[derive(Debug, Serialize_tuple, Deserialize_tuple)]
+pub struct WithdrawalParams {
+    pub amount: TokenAmount
+}
+
 fn main() {
     let _cid = CidParams {
-        cid: Cid::try_from("bafy2bzaceax3ounnbvdbkxa4divufisiz5ylmroka5gsfarg5nfnkfksdxmgq").unwrap(),
+        cid: Cid::try_from("bafy2bzacea6bvgucghtd66eubqazpknwqqpfywtdgp5qxludjsa6tyd6cxwuy").unwrap(),
     };
     println!("{:?}", base64::encode_config(RawBytes::serialize(_cid).unwrap().bytes(), base64::STANDARD));
 
-    let params = RawBytes::new(base64::decode("j0YADQAAAABGAA0AAAAARgBVAAAAAEYAVQAAAABLAC/qVLPfaQQbqa1GAA0AAAAARgBVAAAAAEsAL+pUs99pBBuprYJXAKkHaQWIUwvXQb2iV2YUW8AQc/vet5RWAAjMvkwOXkCsBO0Lea6ncUmpBtcBygMD2CpYJwABcaDkAiDGonLq7utrTApIObEIAmVgD+1jb6DZjjE9EH9ymV33TRkhydgqWCcAAXGg5AIgyxTx3cXXx/zECh7CWgnT55YfMQzX+biIs6XYJzlxemn2").unwrap());
+    let _withdraw = WithdrawalParams {
+        amount: TokenAmount::from_nano(BigInt::from(3345000000 as i64)),
+    };
+    println!("{:?}", base64::encode_config(RawBytes::serialize(_withdraw).unwrap().bytes(), base64::STANDARD));
+
+    let params = RawBytes::new(base64::decode("j0YACAAAAABGAAgAAAAARgBQAAAAAEYAUAAAAABLAAvSyfIuWJEFpk1GAAgAAAAARgBQAAAAAEsAC9LJ8i5YkQWmTYJYGAAK64ihzsmDd5PYL3LfvLjaILVstg/zdFcAAlF+YaH8UPCjlsJSKdm0zE69LDpNNAMC2CpYJwABcaDkAiD2gG8Ch5fPq5yTKKpBGFf5F1QQ7GTm9R/r6s0rE2MHxxkIZtgqWCcAAXGg5AIgYwx+zcj8/12XKisOfupB2/pKebaqrvlbsUSF2/Mfef72").unwrap());
     println!("{:?}", params.deserialize::<PowerActorState>().unwrap());
 
     let params = RawBytes::new(base64::decode("g0MA6AdDAO8HQwDpBw==").unwrap());
     println!("{:?}", params.deserialize::<Vec<Address>>().unwrap());
+
+    let params = RawBytes::new(base64::decode("gdgqWCcAAXGg5AIg3e5WrKjR8Xsur3yO6gxuTWtXc0OTwF6X1mSVDcqkYn4=").unwrap());
+    println!("{:?}", params.deserialize::<CidParams>().unwrap());
+
+    let params = RawBytes::new(base64::decode("eEtXaXRoZHJhdyBXaXRoZHJhd2FsUGFyYW1zIHsgYW1vdW50OiBUb2tlbkFtb3VudCgwLjAwMDAwMDAwMzM0NSkgfSA9PiBmMDEwMTI=").unwrap());
+    println!("{:?}", params.deserialize::<String>().unwrap());
 }

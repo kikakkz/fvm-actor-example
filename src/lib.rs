@@ -14,7 +14,7 @@ use fvm_shared::sector::{RegisteredPoStProof, StoragePower};
 use fvm_shared::clock::ChainEpoch;
 use fvm_shared::smooth::FilterEstimate;
 use fvm_ipld_hamt::Hamt;
-use fvm_shared::HAMT_BIT_WIDTH;
+use fvm_shared::{HAMT_BIT_WIDTH, METHOD_SEND};
 use fvm_shared::address::Address;
 
 /// A macro to abort concisely.
@@ -92,6 +92,7 @@ pub fn invoke(params: u32) -> u32 {
         9 => get_power_actor_state(params),
         10 => get_current_balance(),
         11 => get_power_actor_miners(params),
+        12 => withdraw(params),
         _ => abort!(USR_UNHANDLED_MESSAGE, "unrecognized method"),
     };
 
@@ -298,3 +299,37 @@ pub fn get_power_actor_miners(params: u32) -> Option<RawBytes> {
     Some(RawBytes::serialize(&miners).unwrap())
 }
 
+#[derive(Debug, Deserialize_tuple)]
+pub struct WithdrawalParams {
+    pub amount: TokenAmount
+}
+
+/// Method num 12.
+pub fn withdraw(params: u32) -> Option<RawBytes> {
+    let params = sdk::message::params_raw(params).unwrap().1;
+    let params = RawBytes::new(params);
+    let params: WithdrawalParams = params.deserialize().unwrap();
+    let caller = sdk::message::caller();
+    let address = Address::new_id(caller);
+    let send_params = RawBytes::default();
+
+    let _receipt = fvm_sdk::send::send(
+        &address,
+        METHOD_SEND,
+        send_params,
+        params.amount.clone(),
+    ).unwrap();
+
+    let ret = to_vec(format!("Withdraw {:?} => f0{}", params, caller).as_str());
+    
+    match ret {
+        Ok(ret) => Some(RawBytes::new(ret)),
+        Err(err) => {
+            abort!(
+                USR_ILLEGAL_STATE,
+                "failed to serialize return value: {:?}",
+                err
+            );
+        }
+    }
+}

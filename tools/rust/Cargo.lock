@@ -472,6 +472,7 @@ dependencies = [
  "fvm_ipld_encoding 0.2.2",
  "fvm_sdk",
  "fvm_shared",
+ "num-bigint",
  "serde",
  "serde_tuple",
 ]
