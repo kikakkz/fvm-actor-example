@@ -7,7 +7,7 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-fvm_ipld_encoding = "0.2.1"
+fvm_ipld_encoding = { git = "https://github.com/filecoin-project/ref-fvm.git" }
 base64 = "0.13.1"
 cid = { version = "0.8.4", default-features = false }
 serde = { version = "1.0.136", features = ["derive"] }

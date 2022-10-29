@@ -5,6 +5,7 @@ use cid::multihash::Code;
 use cid::Cid;
 use fvm_ipld_encoding::tuple::{Deserialize_tuple, Serialize_tuple};
 use fvm_ipld_encoding::{to_vec, CborStore, RawBytes, DAG_CBOR};
+use fvm_ipld_encoding::strict_bytes;
 use fvm_sdk as sdk;
 use fvm_sdk::NO_DATA_BLOCK_ID;
 use fvm_shared::ActorID;
@@ -93,6 +94,7 @@ pub fn invoke(params: u32) -> u32 {
         10 => get_current_balance(),
         11 => get_power_actor_miners(params),
         12 => withdraw(params),
+        13 => create_miner(params),
         _ => abort!(USR_UNHANDLED_MESSAGE, "unrecognized method"),
     };
 
@@ -332,4 +334,44 @@ pub fn withdraw(params: u32) -> Option<RawBytes> {
             );
         }
     }
+}
+
+#[derive(Debug, Serialize_tuple, Deserialize_tuple, Clone, PartialEq)]
+pub struct CreateMinerParams {
+    pub owner: Address,
+    pub worker: Address,
+    pub window_po_st_proof_type: RegisteredPoStProof,
+    // 12D3KooWBRqtxhJCtiLmCwKgAQozJtdGinEDdJGoS5oHw7vCjMGc
+    #[serde(with = "strict_bytes")]
+    pub peer: Vec<u8>,
+}
+
+/// Method num 13.
+pub fn create_miner(params: u32) -> Option<RawBytes> {
+    let params = sdk::message::params_raw(params).unwrap().1;
+    let params = RawBytes::new(params);
+    let params: CreateMinerParams = params.deserialize().unwrap();
+    // let owner = Address::new_id(1054);  // We cannot get contract id here
+    let power_actor = Address::new_id(4);
+
+    // params.owner = owner;
+    let send_params = RawBytes::serialize(params).unwrap();
+
+    let receipt = fvm_sdk::send::send(
+        &power_actor,
+        2,
+        send_params,
+        TokenAmount::from_atto(0),
+    ).unwrap();
+
+    let ret = to_vec(
+        format!(
+            "Receipt exit_code {}, return_data: {:?}, gas_used: {}",
+            receipt.exit_code,
+            receipt.return_data,
+            receipt.gas_used,
+        ).as_str(),
+    ).unwrap();
+
+    Some(RawBytes::new(ret))
 }

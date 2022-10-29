@@ -128,15 +128,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cs_serde_bytes"
-version = "0.12.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5fc673ddabf48214550526b068dc28065a75f05e21e452880095247c635b1d91"
-dependencies = [
- "serde",
-]
-
-[[package]]
 name = "data-encoding"
 version = "2.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -175,40 +166,11 @@ dependencies = [
 [[package]]
 name = "fvm_ipld_blockstore"
 version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "688239a96199577f6705a3f9689abfd795f867f91f5847bc7e236017cc672df7"
-dependencies = [
- "anyhow",
- "cid",
- "multihash",
-]
-
-[[package]]
-name = "fvm_ipld_blockstore"
-version = "0.1.1"
 source = "git+https://github.com/filecoin-project/ref-fvm.git#1d7fab5b862e7f7ac501af0d6e69eca5a485cb52"
 dependencies = [
  "anyhow",
  "cid",
  "multihash",
-]
-
-[[package]]
-name = "fvm_ipld_encoding"
-version = "0.2.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ce9cfcb4ae444801009182fded790dd56aff9c9a567e54510e2ccf14fb9daf8e"
-dependencies = [
- "anyhow",
- "cid",
- "cs_serde_bytes",
- "fvm_ipld_blockstore 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "multihash",
- "serde",
- "serde_ipld_dagcbor",
- "serde_repr",
- "serde_tuple",
- "thiserror",
 ]
 
 [[package]]
@@ -218,7 +180,7 @@ source = "git+https://github.com/filecoin-project/ref-fvm.git#1d7fab5b862e7f7ac5
 dependencies = [
  "anyhow",
  "cid",
- "fvm_ipld_blockstore 0.1.1 (git+https://github.com/filecoin-project/ref-fvm.git)",
+ "fvm_ipld_blockstore",
  "multihash",
  "serde",
  "serde_ipld_dagcbor",
@@ -233,7 +195,7 @@ version = "3.0.0-alpha.8"
 source = "git+https://github.com/filecoin-project/ref-fvm.git#1d7fab5b862e7f7ac501af0d6e69eca5a485cb52"
 dependencies = [
  "cid",
- "fvm_ipld_encoding 0.3.0",
+ "fvm_ipld_encoding",
  "fvm_shared",
  "lazy_static",
  "log",
@@ -252,8 +214,8 @@ dependencies = [
  "cid",
  "data-encoding",
  "data-encoding-macro",
- "fvm_ipld_blockstore 0.1.1 (git+https://github.com/filecoin-project/ref-fvm.git)",
- "fvm_ipld_encoding 0.3.0",
+ "fvm_ipld_blockstore",
+ "fvm_ipld_encoding",
  "lazy_static",
  "log",
  "multihash",
@@ -469,7 +431,7 @@ version = "0.1.0"
 dependencies = [
  "base64",
  "cid",
- "fvm_ipld_encoding 0.2.2",
+ "fvm_ipld_encoding",
  "fvm_sdk",
  "fvm_shared",
  "num-bigint",
