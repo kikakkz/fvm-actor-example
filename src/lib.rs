@@ -95,6 +95,7 @@ pub fn invoke(params: u32) -> u32 {
         11 => get_power_actor_miners(params),
         12 => withdraw(params),
         13 => create_miner(params),
+        14 => fund_t04(params),
         _ => abort!(USR_UNHANDLED_MESSAGE, "unrecognized method"),
     };
 
@@ -374,4 +375,33 @@ pub fn create_miner(params: u32) -> Option<RawBytes> {
     ).unwrap();
 
     Some(RawBytes::new(ret))
+}
+
+/// Method num 14.
+pub fn fund_t04(params: u32) -> Option<RawBytes> {
+    let params = sdk::message::params_raw(params).unwrap().1;
+    let params = RawBytes::new(params);
+    let params: WithdrawalParams = params.deserialize().unwrap();
+    let power_actor = Address::new_id(4);
+    let send_params = RawBytes::default();
+
+    let _receipt = fvm_sdk::send::send(
+        &power_actor,
+        METHOD_SEND,
+        send_params,
+        params.amount.clone(),
+    ).unwrap();
+
+    let ret = to_vec(format!("Withdraw {:?} => f04", params).as_str());
+
+    match ret {
+        Ok(ret) => Some(RawBytes::new(ret)),
+        Err(err) => {
+            abort!(
+                USR_ILLEGAL_STATE,
+                "failed to serialize return value: {:?}",
+                err
+            );
+        }
+    }
 }

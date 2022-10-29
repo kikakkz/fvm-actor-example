@@ -35,6 +35,7 @@ github.com/filecoin-project/go-address v1.0.0/go.mod h1:5t3z6qPmIADZBtuE9EIzi0Ew
 github.com/filecoin-project/go-amt-ipld/v2 v2.1.0 h1:t6qDiuGYYngDqaLc2ZUvdtAg4UNxPeOYaXhBWSNsVaM=
 github.com/filecoin-project/go-amt-ipld/v2 v2.1.0/go.mod h1:nfFPoGyX0CU9SkXX8EoCcSuHN1XcbN0c6KBh7yvP5fs=
 github.com/filecoin-project/go-amt-ipld/v3 v3.0.0/go.mod h1:Qa95YNAbtoVCTSVtX38aAC1ptBnJfPma1R/zZsKmx4o=
+github.com/filecoin-project/go-amt-ipld/v3 v3.1.0 h1:ZNJ9tEG5bE72vBWYiuh5bkxJVM3ViHNOmQ7qew9n6RE=
 github.com/filecoin-project/go-amt-ipld/v3 v3.1.0/go.mod h1:UjM2QhDFrrjD5s1CdnkJkat4ga+LqZBZgTMniypABRo=
 github.com/filecoin-project/go-amt-ipld/v4 v4.0.0 h1:XM81BJ4/6h3FV0WfFjh74cIDIgqMbJsMBLM0fIuLUUk=
 github.com/filecoin-project/go-amt-ipld/v4 v4.0.0/go.mod h1:gF053YQ4BIpzTNDoEwHZas7U3oAwncDVGvOHyY8oDpE=

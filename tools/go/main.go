@@ -6,8 +6,11 @@ import (
     cbg "github.com/whyrusleeping/cbor-gen"
     "fmt"
     "encoding/base64"
+    "encoding/json"
     "io"
     "golang.org/x/xerrors"
+    power6 "github.com/filecoin-project/specs-actors/v6/actors/builtin/power"
+    "bytes"
 )
 
 type Cid struct {
@@ -130,5 +133,21 @@ func main() {
 
     a, _ = actors.SerializeParams(cbg.CborCid(_cid))
     fmt.Println(base64.StdEncoding.EncodeToString(a))
+
+    cmp := &power6.CreateMinerParams{}
+    b, err := base64.StdEncoding.DecodeString("hVgxA7ivFzAgasDgX6pDFcDTuw7qmQwCx/8JdFpJq3vi0zGQbSKIq8LCdHn2joqSuGwj9FgxA7ivFzAgasDgX6pDFcDTuw7qmQwCx/8JdFpJq3vi0zGQbSKIq8LCdHn2joqSuGwj9AdYJgAkCAESIMsrq9DjnCJpGRxh6dLHaCfPMMB0Fvuz/51vnaEIU7hFgA==")
+    if err != nil {
+        fmt.Println(err)
+	return
+    }
+    buffer := bytes.NewReader(b)
+    err = cmp.UnmarshalCBOR(buffer)
+    if err != nil {
+	fmt.Println(err)
+        return
+    }
+    fmt.Println("======================================")
+    b, _ = json.Marshal(cmp)
+    fmt.Println(string(b))
 }
 

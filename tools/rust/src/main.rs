@@ -12,9 +12,12 @@ use fvm_shared::smooth::FilterEstimate;
 use fvm_shared::econ::TokenAmount;
 use fvm_shared::bigint::bigint_ser;
 use fvm_shared::clock::ChainEpoch;
-use fvm_shared::address::Address;
+use fvm_shared::address::{
+    Address,
+};
 use fvm_shared::sector::RegisteredPoStProof;
 use num_bigint::BigInt;
+use std::str::FromStr;
 
 #[derive(Debug, Serialize_tuple, Deserialize_tuple)]
 struct CidParams {
@@ -58,10 +61,12 @@ pub struct WithdrawalParams {
 pub struct CreateMinerParams {
     pub owner: Address,
     pub worker: Address,
-    pub window_post_proof_type: RegisteredPoStProof,
+    pub window_po_st_proof_type: RegisteredPoStProof,
     // 12D3KooWBRqtxhJCtiLmCwKgAQozJtdGinEDdJGoS5oHw7vCjMGc
     #[serde(with = "strict_bytes")]
     pub peer: Vec<u8>,
+    #[serde(with = "strict_bytes")]
+    pub multiaddrs: Vec<u8>,
 }
 
 fn main() {
@@ -75,11 +80,23 @@ fn main() {
     };
     println!("{:?}", base64::encode_config(RawBytes::serialize(_withdraw).unwrap().bytes(), base64::STANDARD));
 
+    println!("{:?}", base64::encode_config(RawBytes::serialize(to_vec("12D3KooWBRqtxhJCtiLmCwKgAQozJtdGinEDdJGoS5oHw7vCjMGc").unwrap()).unwrap().bytes(), base64::STANDARD));
+
     let _create_miner = CreateMinerParams {
         owner: Address::new_id(1113),
         worker: Address::new_id(1055),
-        window_post_proof_type: RegisteredPoStProof::StackedDRGWindow32GiBV1,
+        window_po_st_proof_type: RegisteredPoStProof::StackedDRGWindow32GiBV1,
         peer: to_vec("12D3KooWBRqtxhJCtiLmCwKgAQozJtdGinEDdJGoS5oHw7vCjMGc").unwrap(),
+        multiaddrs: Vec::new(),
+    };
+    println!("{:?}", base64::encode_config(RawBytes::serialize(_create_miner).unwrap().bytes(), base64::STANDARD));
+
+    let _create_miner = CreateMinerParams {
+        owner: Address::from_str("f3xcxrombanlaoax5kimk4bu53b3vjsdacy77qs5c2jgvxxywtggig2iuivpbme5dz62hivevynqr7ictwnaqq").unwrap(),
+        worker: Address::from_str("f3xcxrombanlaoax5kimk4bu53b3vjsdacy77qs5c2jgvxxywtggig2iuivpbme5dz62hivevynqr7ictwnaqq").unwrap(),
+        window_po_st_proof_type: RegisteredPoStProof::StackedDRGWindow32GiBV1,
+        peer: to_vec("ACQIARIgyyur0OOcImkZHGHp0sdoJ88wwHQW+7P/nW+doQhTuEU=").unwrap(),
+        multiaddrs: Vec::new(),
     };
     println!("{:?}", base64::encode_config(RawBytes::serialize(_create_miner).unwrap().bytes(), base64::STANDARD));
 
@@ -98,8 +115,14 @@ fn main() {
     let params = RawBytes::new(base64::decode("eD1SZWNlaXB0IGV4aXRfY29kZSAyMSwgcmV0dXJuX2RhdGE6IFJhd0J5dGVzIHsgIH0sIGdhc191c2VkOiAw").unwrap());
     println!("{:?}", params.deserialize::<String>().unwrap());
 
+    let params = RawBytes::new(base64::decode("ACQIARIgA2SKyAMp0kUK16HKsNMHnhqgFVZwayIaMPc4yuz3lms=").unwrap());
+    println!("{:?}", base64::encode_config(params.bytes(), base64::STANDARD));
+
     let params = RawBytes::new(base64::decode("eEJXaXRoZHJhdyBXaXRoZHJhd2FsUGFyYW1zIHsgYW1vdW50OiBUb2tlbkFtb3VudCgzLjM0NSkgfSA9PiBmMDEwNTM=").unwrap());
     println!("{:?}", params.deserialize::<String>().unwrap());
+
+    // let params = RawBytes::new(base64::decode("hVgxA7ivFzAgasDgX6pDFcDTuw7qmQwCx/8JdFpJq3vi0zGQbSKIq8LCdHn2joqSuGwj9FgxA7ivFzAgasDgX6pDFcDTuw7qmQwCx/8JdFpJq3vi0zGQbSKIq8LCdHn2joqSuGwj9AdYJgAkCAESIMsrq9DjnCJpGRxh6dLHaCfPMMB0Fvuz/51vnaEIU7hFgA==").unwrap());
+    // println!("{:?}", params.deserialize::<CreateMinerParams>().unwrap());
 
     let params = RawBytes::new(base64::decode("eQGSUGFyYW1zIENyZWF0ZU1pbmVyUGFyYW1zIHsgb3duZXI6IEFkZHJlc3MgeyBwYXlsb2FkOiBJRCgxMTEzKSB9LCB3b3JrZXI6IEFkZHJlc3MgeyBwYXlsb2FkOiBJRCgxMDU1KSB9LCB3aW5kb3dfcG9fc3RfcHJvb2ZfdHlwZTogU3RhY2tlZERSR1dpbmRvdzMyR2lCVjEsIHBlZXI6IFsxMjAsIDUyLCA0OSwgNTAsIDY4LCA1MSwgNzUsIDExMSwgMTExLCA4NywgNjYsIDgyLCAxMTMsIDExNiwgMTIwLCAxMDQsIDc0LCA2NywgMTE2LCAxMDUsIDc2LCAxMDksIDY3LCAxMTksIDc1LCAxMDMsIDY1LCA4MSwgMTExLCAxMjIsIDc0LCAxMTYsIDEwMCwgNzEsIDEwNSwgMTEwLCA2OSwgNjgsIDEwMCwgNzQsIDcxLCAxMTEsIDgzLCA1MywgMTExLCA3MiwgMTE5LCA1NSwgMTE4LCA2NywgMTA2LCA3NywgNzEsIDk5XSB9").unwrap());
     println!("{:?}", params.deserialize::<String>().unwrap());
