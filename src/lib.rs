@@ -351,17 +351,18 @@ pub struct CreateMinerParams {
 pub fn create_miner(params: u32) -> Option<RawBytes> {
     let params = sdk::message::params_raw(params).unwrap().1;
     let params = RawBytes::new(params);
-    let params: CreateMinerParams = params.deserialize().unwrap();
+    // let params: CreateMinerParams = params.deserialize().unwrap();
     // let owner = Address::new_id(1054);  // We cannot get contract id here
     let power_actor = Address::new_id(4);
 
     // params.owner = owner;
-    let send_params = RawBytes::serialize(params).unwrap();
+    // let send_params = RawBytes::serialize(params).unwrap();
+    // let send_params = params;
 
     let receipt = fvm_sdk::send::send(
         &power_actor,
         2,
-        send_params,
+        params,
         TokenAmount::from_atto(0),
     ).unwrap();
 
@@ -369,7 +370,7 @@ pub fn create_miner(params: u32) -> Option<RawBytes> {
         format!(
             "Receipt exit_code {}, return_data: {:?}, gas_used: {}",
             receipt.exit_code,
-            receipt.return_data,
+            receipt.return_data.deserialize::<String>().unwrap(),
             receipt.gas_used,
         ).as_str(),
     ).unwrap();

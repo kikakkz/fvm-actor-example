@@ -11,6 +11,11 @@ import (
     "golang.org/x/xerrors"
     power6 "github.com/filecoin-project/specs-actors/v6/actors/builtin/power"
     "bytes"
+    "github.com/filecoin-project/go-address"
+    "github.com/filecoin-project/go-state-types/abi"
+    "github.com/libp2p/go-libp2p-core/crypto"
+    "crypto/rand"
+    "github.com/libp2p/go-libp2p-core/peer"
 )
 
 type Cid struct {
@@ -136,7 +141,7 @@ func main() {
 
     cmp := &power6.CreateMinerParams{}
     // b, err := base64.StdEncoding.DecodeString("hVgxA7ivFzAgasDgX6pDFcDTuw7qmQwCx/8JdFpJq3vi0zGQbSKIq8LCdHn2joqSuGwj9FgxA7ivFzAgasDgX6pDFcDTuw7qmQwCx/8JdFpJq3vi0zGQbSKIq8LCdHn2joqSuGwj9AdYJgAkCAESIMsrq9DjnCJpGRxh6dLHaCfPMMB0Fvuz/51vnaEIU7hFgA==")
-    b, err := base64.StdEncoding.DecodeString("hVgxA7ivFzAgasDgX6pDFcDTuw7qmQwCx/8JdFpJq3vi0zGQbSKIq8LCdHn2joqSuGwj9FgxA7ivFzAgasDgX6pDFcDTuw7qmQwCx/8JdFpJq3vi0zGQbSKIq8LCdHn2joqSuGwj9AhYNng0QUNRSUFSSWdGL0plQkJOcEtTbmdCem1vdGpiaEVFcG5IZy9VTWJXT0FSZkRYTVpSYnprPVgfeB0vaXA0LzE5NC40NS4xOTYuMTMwL3RjcC8xMTExMw==")
+    b, err := base64.StdEncoding.DecodeString("hVUCqk8SCpZRPRNry1+7ysNnbR6n2epYMQO4rxcwIGrA4F+qQxXA07sO6pkMAsf/CXRaSat74tMxkG0iiKvCwnR59o6KkrhsI/QIWCYAJAgBEiCt8gcOk3C7ZHa9WRlJzxawE/CBtUFik2VWWtXXtgXIGYA=")
     if err != nil {
         fmt.Println(err)
 	return
@@ -150,5 +155,49 @@ func main() {
     fmt.Println("======================================")
     b, _ = json.Marshal(cmp)
     fmt.Println(string(b))
+
+    owner, _ := address.NewFromString("t2r6omgv3ar3cxdi2okmfyaqxqejpu3xdcr4x6xha") // t01212
+    worker, _ := address.NewFromString("t3xcxrombanlaoax5kimk4bu53b3vjsdacy77qs5c2jgvxxywtggig2iuivpbme5dz62hivevynqr7ictwnaqq")
+
+    pk, _, err := crypto.GenerateEd25519Key(rand.Reader)
+    if err != nil {
+	fmt.Println(err)
+	return
+    }
+    peerid, err := peer.IDFromPrivateKey(pk)
+    if err != nil {
+	fmt.Println(err)
+	return
+    }
+
+    peerid, _ = peer.Decode("12D3KooWMXNkWP1cZpsVjeKXnWwULFc6yhPAn1SYs2m3Fd2MK1LU")
+
+    cmp = &power6.CreateMinerParams {
+        Owner: owner,
+	Worker: worker,
+	WindowPoStProofType: abi.RegisteredPoStProof_StackedDrgWindow32GiBV1,
+	Peer: abi.PeerID(peerid),
+	Multiaddrs: nil,
+    }
+    fmt.Println("1 ********************************************")
+    b, _ = json.Marshal(cmp)
+    fmt.Println(string(b))
+
+    a, err = actors.SerializeParams(cmp)
+    if err != nil {
+	fmt.Println(err)
+	return
+    }
+    fmt.Println("2 ********************************************")
+    fmt.Println(peerid)
+    fmt.Println(string(abi.PeerID(peer.ID("12D3KooWRSHqnjxrj7RAp6wFTLgJUQEfGGnudAK51mATvzg2aFFV"))))
+    b, _ = json.Marshal(abi.PeerID(peerid))
+    fmt.Println(string(b))
+    fmt.Println(base64.StdEncoding.EncodeToString(a))
+    b, _ = json.Marshal(cmp)
+    fmt.Println(string(b))
+
+    peerid1, _ := peer.Decode("12D3KooWMXNkWP1cZpsVjeKXnWwULFc6yhPAn1SYs2m3Fd2MK1LU")
+    fmt.Println(peerid1)
 }
 

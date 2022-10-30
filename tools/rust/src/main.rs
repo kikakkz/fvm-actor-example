@@ -4,9 +4,7 @@ use cid::Cid;
 use std::convert::TryFrom;
 use fvm_ipld_encoding::{
     tuple::{Deserialize_tuple, Serialize_tuple},
-    to_vec,
 };
-use fvm_ipld_encoding::strict_bytes;
 use fvm_shared::sector::StoragePower;
 use fvm_shared::smooth::FilterEstimate;
 use fvm_shared::econ::TokenAmount;
@@ -19,6 +17,7 @@ use fvm_shared::sector::RegisteredPoStProof;
 use num_bigint::BigInt;
 use std::str::FromStr;
 use libp2p::PeerId;
+use fvm_ipld_encoding::BytesDe;
 
 #[derive(Debug, Serialize_tuple, Deserialize_tuple)]
 struct CidParams {
@@ -59,15 +58,15 @@ pub struct WithdrawalParams {
 }
 
 #[derive(Debug, Serialize_tuple, Deserialize_tuple)]
+#[serde(rename_all = "PascalCase")]
 pub struct CreateMinerParams {
     pub owner: Address,
     pub worker: Address,
     pub window_po_st_proof_type: RegisteredPoStProof,
     // 12D3KooWBRqtxhJCtiLmCwKgAQozJtdGinEDdJGoS5oHw7vCjMGc
-    #[serde(with = "strict_bytes")]
-    pub peer: Vec<u8>,
-    #[serde(with = "strict_bytes")]
-    pub multiaddrs: Vec<u8>,
+    // pub peer: PeerId,
+    pub peer: String,
+    pub multiaddrs: Vec<BytesDe>,
 }
 
 fn main() {
@@ -88,19 +87,22 @@ fn main() {
         owner: Address::new_id(1113),
         worker: Address::new_id(1055),
         window_po_st_proof_type: RegisteredPoStProof::StackedDRGWindow32GiBV1,
-        peer: to_vec(&base64::encode_config(params.clone(), base64::STANDARD)).unwrap(),
+        peer: base64::encode_config(PeerId::from_bytes(&params.clone()).unwrap().to_bytes(), base64::STANDARD),
         multiaddrs: Vec::new(),
     };
+
+    println!("create miner params 1 {:?}", _create_miner);
     println!("create miner params 1 {:?}", base64::encode_config(RawBytes::serialize(_create_miner).unwrap().bytes(), base64::STANDARD));
 
     let _create_miner = CreateMinerParams {
         owner: Address::from_str("f3xcxrombanlaoax5kimk4bu53b3vjsdacy77qs5c2jgvxxywtggig2iuivpbme5dz62hivevynqr7ictwnaqq").unwrap(),
         worker: Address::from_str("f3xcxrombanlaoax5kimk4bu53b3vjsdacy77qs5c2jgvxxywtggig2iuivpbme5dz62hivevynqr7ictwnaqq").unwrap(),
         window_po_st_proof_type: RegisteredPoStProof::StackedDRGWindow32GiBV1,
-        peer: to_vec(&base64::encode_config(params.clone(), base64::STANDARD)).unwrap(),
-        multiaddrs: to_vec("/ip4/194.45.196.130/tcp/11113").unwrap(),
+        peer: base64::encode_config(PeerId::from_bytes(&params.clone()).unwrap().to_bytes(), base64::STANDARD),
+        multiaddrs: Vec::new(),
     };
-    println!("create miner params 2 {:?}", base64::encode_config(RawBytes::serialize(_create_miner).unwrap().bytes(), base64::STANDARD));
+    println!("create miner params 2 original {:?}", _create_miner);
+    println!("create miner params 2 {:?}", base64::encode(RawBytes::serialize(_create_miner).unwrap().bytes()));
 
     let params = RawBytes::new(base64::decode("j0YACAAAAABGAAgAAAAARgBQAAAAAEYAUAAAAABLAAvSyfIuWJEFpk1GAAgAAAAARgBQAAAAAEsAC9LJ8i5YkQWmTYJYGAAK64ihzsmDd5PYL3LfvLjaILVstg/zdFcAAlF+YaH8UPCjlsJSKdm0zE69LDpNNAMC2CpYJwABcaDkAiD2gG8Ch5fPq5yTKKpBGFf5F1QQ7GTm9R/r6s0rE2MHxxkIZtgqWCcAAXGg5AIgYwx+zcj8/12XKisOfupB2/pKebaqrvlbsUSF2/Mfef72").unwrap());
     println!("{:?}", params.deserialize::<PowerActorState>().unwrap());
@@ -125,6 +127,9 @@ fn main() {
     println!("encode {:?}", base64::encode_config(params, base64::STANDARD));
 
     let params = RawBytes::new(base64::decode("eEJXaXRoZHJhdyBXaXRoZHJhd2FsUGFyYW1zIHsgYW1vdW50OiBUb2tlbkFtb3VudCgzLjM0NSkgfSA9PiBmMDEwNTM=").unwrap());
+    println!("{:?}", params.deserialize::<String>().unwrap());
+
+    let params = RawBytes::new(base64::decode("eD1SZWNlaXB0IGV4aXRfY29kZSAxOCwgcmV0dXJuX2RhdGE6IFJhd0J5dGVzIHsgIH0sIGdhc191c2VkOiAw").unwrap());
     println!("{:?}", params.deserialize::<String>().unwrap());
 
     // let params = RawBytes::new(base64::decode("hVgxA7ivFzAgasDgX6pDFcDTuw7qmQwCx/8JdFpJq3vi0zGQbSKIq8LCdHn2joqSuGwj9FgxA7ivFzAgasDgX6pDFcDTuw7qmQwCx/8JdFpJq3vi0zGQbSKIq8LCdHn2joqSuGwj9AdYJgAkCAESIMsrq9DjnCJpGRxh6dLHaCfPMMB0Fvuz/51vnaEIU7hFgA==").unwrap());
