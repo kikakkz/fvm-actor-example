@@ -135,7 +135,8 @@ func main() {
     fmt.Println(base64.StdEncoding.EncodeToString(a))
 
     cmp := &power6.CreateMinerParams{}
-    b, err := base64.StdEncoding.DecodeString("hVgxA7ivFzAgasDgX6pDFcDTuw7qmQwCx/8JdFpJq3vi0zGQbSKIq8LCdHn2joqSuGwj9FgxA7ivFzAgasDgX6pDFcDTuw7qmQwCx/8JdFpJq3vi0zGQbSKIq8LCdHn2joqSuGwj9AdYJgAkCAESIMsrq9DjnCJpGRxh6dLHaCfPMMB0Fvuz/51vnaEIU7hFgA==")
+    // b, err := base64.StdEncoding.DecodeString("hVgxA7ivFzAgasDgX6pDFcDTuw7qmQwCx/8JdFpJq3vi0zGQbSKIq8LCdHn2joqSuGwj9FgxA7ivFzAgasDgX6pDFcDTuw7qmQwCx/8JdFpJq3vi0zGQbSKIq8LCdHn2joqSuGwj9AdYJgAkCAESIMsrq9DjnCJpGRxh6dLHaCfPMMB0Fvuz/51vnaEIU7hFgA==")
+    b, err := base64.StdEncoding.DecodeString("hVgxA7ivFzAgasDgX6pDFcDTuw7qmQwCx/8JdFpJq3vi0zGQbSKIq8LCdHn2joqSuGwj9FgxA7ivFzAgasDgX6pDFcDTuw7qmQwCx/8JdFpJq3vi0zGQbSKIq8LCdHn2joqSuGwj9AhYNng0QUNRSUFSSWdGL0plQkJOcEtTbmdCem1vdGpiaEVFcG5IZy9VTWJXT0FSZkRYTVpSYnprPVgfeB0vaXA0LzE5NC40NS4xOTYuMTMwL3RjcC8xMTExMw==")
     if err != nil {
         fmt.Println(err)
 	return
