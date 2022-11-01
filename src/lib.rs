@@ -364,18 +364,39 @@ pub fn create_miner(params: u32) -> Option<RawBytes> {
         2,
         params,
         TokenAmount::from_atto(0),
-    ).unwrap();
+    );
 
-    let ret = to_vec(
-        format!(
-            "Receipt exit_code {}, return_data: {:?}, gas_used: {}",
-            receipt.exit_code,
-            receipt.return_data.deserialize::<String>().unwrap(),
-            receipt.gas_used,
-        ).as_str(),
-    ).unwrap();
+    match receipt {
+        Ok(receipt) => {
+            let ret = to_vec(
+                format!(
+                    "Receipt exit_code {}, return_data: {:?}, gas_used: {}",
+                    receipt.exit_code,
+                    // receipt.return_data.deserialize::<String>().unwrap(),
+                    receipt.return_data,
+                    receipt.gas_used,
+                ).as_str(),
+            );
 
-    Some(RawBytes::new(ret))
+            match ret {
+                Ok(ret) => Some(RawBytes::new(ret)),
+                Err(err) => {
+                    abort!(
+                        USR_ILLEGAL_STATE,
+                        "failed to serialize return value: {:?}",
+                        err
+                    );
+                }
+            }
+        },
+        Err(err) => {
+            abort!(
+                USR_ILLEGAL_STATE,
+                "fail create miner: {:?}",
+                err
+            );
+        }
+    }
 }
 
 /// Method num 14.

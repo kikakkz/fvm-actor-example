@@ -156,8 +156,8 @@ func main() {
     b, _ = json.Marshal(cmp)
     fmt.Println(string(b))
 
-    owner, _ := address.NewFromString("t2r6omgv3ar3cxdi2okmfyaqxqejpu3xdcr4x6xha") // t01212
-    worker, _ := address.NewFromString("t3xcxrombanlaoax5kimk4bu53b3vjsdacy77qs5c2jgvxxywtggig2iuivpbme5dz62hivevynqr7ictwnaqq")
+    owner, _ := address.NewFromString("t2wyxjag7e4s3rnlbz5tmndbdaxit6624hp4qwcqy") // t01001
+    worker, _ := address.NewFromString("t2wyxjag7e4s3rnlbz5tmndbdaxit6624hp4qwcqy")
 
     pk, _, err := crypto.GenerateEd25519Key(rand.Reader)
     if err != nil {
@@ -175,7 +175,8 @@ func main() {
     cmp = &power6.CreateMinerParams {
         Owner: owner,
 	Worker: worker,
-	WindowPoStProofType: abi.RegisteredPoStProof_StackedDrgWindow32GiBV1,
+	// WindowPoStProofType: abi.RegisteredPoStProof_StackedDrgWindow32GiBV1,
+	WindowPoStProofType: abi.RegisteredPoStProof_StackedDrgWindow2KiBV1,
 	Peer: abi.PeerID(peerid),
 	Multiaddrs: nil,
     }

@@ -132,6 +132,10 @@ fn main() {
     let params = RawBytes::new(base64::decode("eD1SZWNlaXB0IGV4aXRfY29kZSAxOCwgcmV0dXJuX2RhdGE6IFJhd0J5dGVzIHsgIH0sIGdhc191c2VkOiAw").unwrap());
     println!("{:?}", params.deserialize::<String>().unwrap());
 
+    let params = RawBytes::new(base64::decode("eHJSZWNlaXB0IGV4aXRfY29kZSAwLCByZXR1cm5fZGF0YTogUmF3Qnl0ZXMgeyA4MjQzMDBlZTA3NTUwMmNlNDE2ODM0NjM2MTczZWFhYjk0ODRkOTk2MjVjODcwMmYyOTQwNzUgfSwgZ2FzX3VzZWQ6IDA=").unwrap());
+    println!("{:?}", params.deserialize::<String>().unwrap());
+
+
     // let params = RawBytes::new(base64::decode("hVgxA7ivFzAgasDgX6pDFcDTuw7qmQwCx/8JdFpJq3vi0zGQbSKIq8LCdHn2joqSuGwj9FgxA7ivFzAgasDgX6pDFcDTuw7qmQwCx/8JdFpJq3vi0zGQbSKIq8LCdHn2joqSuGwj9AdYJgAkCAESIMsrq9DjnCJpGRxh6dLHaCfPMMB0Fvuz/51vnaEIU7hFgA==").unwrap());
     // println!("{:?}", params.deserialize::<CreateMinerParams>().unwrap());
 
