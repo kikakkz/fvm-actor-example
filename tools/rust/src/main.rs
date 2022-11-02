@@ -189,6 +189,9 @@ fn main() {
     let params = RawBytes::new(base64::decode("gkMA8gdVAoGNqG6MBkCrIwv1WdiYryBg3ue6").unwrap());
     println!("{:?}", params.deserialize::<CreateMinerReturn>().unwrap());
 
-    let params = Address::new_id(1011);
+    let params = Address::new_id(1003);
     println!("create miner params req 3 {:?}", base64::encode(RawBytes::serialize(params).unwrap().bytes()));
+
+    let params = RawBytes::new(base64::decode("eEpDaGFuZ2VPd25lciBBZGRyZXNzIHsgcGF5bG9hZDogSUQoMTAwMykgfSAtPiBBZGRyZXNzIHsgcGF5bG9hZDogSUQoMTAwMSkgfQ==").unwrap());
+    println!("{:?}", params.deserialize::<String>().unwrap());
 }
