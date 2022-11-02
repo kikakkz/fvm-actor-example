@@ -156,8 +156,8 @@ func main() {
     b, _ = json.Marshal(cmp)
     fmt.Println(string(b))
 
-    owner, _ := address.NewFromString("t2wyxjag7e4s3rnlbz5tmndbdaxit6624hp4qwcqy") // t01001
-    worker, _ := address.NewFromString("t2wyxjag7e4s3rnlbz5tmndbdaxit6624hp4qwcqy")
+    owner, _ := address.NewFromString("t2abdkagcxhopfv6q2nynwobptd7nticikjoro6ti") // t01001
+    worker, _ := address.NewFromString("t2abdkagcxhopfv6q2nynwobptd7nticikjoro6ti")
 
     pk, _, err := crypto.GenerateEd25519Key(rand.Reader)
     if err != nil {

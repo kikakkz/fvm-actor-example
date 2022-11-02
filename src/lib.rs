@@ -368,6 +368,13 @@ pub fn create_miner(params: u32) -> Option<RawBytes> {
 
     match receipt {
         Ok(receipt) => {
+            if !receipt.exit_code.is_success() {
+                abort!(
+                    USR_ILLEGAL_STATE,
+                    "fail create miner"
+                );
+            }
+
             let ret = to_vec(
                 format!(
                     "Receipt exit_code {}, return_data: {:?}, gas_used: {}",
