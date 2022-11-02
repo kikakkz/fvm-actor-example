@@ -11,7 +11,7 @@ import (
     "golang.org/x/xerrors"
     power6 "github.com/filecoin-project/specs-actors/v6/actors/builtin/power"
     "bytes"
-    "github.com/filecoin-project/go-address"
+    // "github.com/filecoin-project/go-address"
     "github.com/filecoin-project/go-state-types/abi"
     "github.com/libp2p/go-libp2p-core/crypto"
     "crypto/rand"
@@ -156,9 +156,6 @@ func main() {
     b, _ = json.Marshal(cmp)
     fmt.Println(string(b))
 
-    owner, _ := address.NewFromString("t2abdkagcxhopfv6q2nynwobptd7nticikjoro6ti") // t01001
-    worker, _ := address.NewFromString("t2abdkagcxhopfv6q2nynwobptd7nticikjoro6ti")
-
     pk, _, err := crypto.GenerateEd25519Key(rand.Reader)
     if err != nil {
 	fmt.Println(err)
@@ -170,12 +167,9 @@ func main() {
 	return
     }
 
-    peerid, _ = peer.Decode("12D3KooWMXNkWP1cZpsVjeKXnWwULFc6yhPAn1SYs2m3Fd2MK1LU")
+    // peerid, _ = peer.Decode("12D3KooWMXNkWP1cZpsVjeKXnWwULFc6yhPAn1SYs2m3Fd2MK1LU")
 
     cmp = &power6.CreateMinerParams {
-        Owner: owner,
-	Worker: worker,
-	// WindowPoStProofType: abi.RegisteredPoStProof_StackedDrgWindow32GiBV1,
 	WindowPoStProofType: abi.RegisteredPoStProof_StackedDrgWindow2KiBV1,
 	Peer: abi.PeerID(peerid),
 	Multiaddrs: nil,

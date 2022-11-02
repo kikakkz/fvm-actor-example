@@ -4,7 +4,7 @@ use crate::blockstore::Blockstore;
 use cid::multihash::Code;
 use cid::Cid;
 use fvm_ipld_encoding::tuple::{Deserialize_tuple, Serialize_tuple};
-use fvm_ipld_encoding::{to_vec, CborStore, RawBytes, DAG_CBOR};
+use fvm_ipld_encoding::{to_vec, CborStore, RawBytes, DAG_CBOR, BytesDe, Cbor};
 use fvm_ipld_encoding::strict_bytes;
 use fvm_sdk as sdk;
 use fvm_sdk::NO_DATA_BLOCK_ID;
@@ -337,32 +337,48 @@ pub fn withdraw(params: u32) -> Option<RawBytes> {
     }
 }
 
-#[derive(Debug, Serialize_tuple, Deserialize_tuple, Clone, PartialEq)]
-pub struct CreateMinerParams {
-    pub owner: Address,
-    pub worker: Address,
-    pub window_po_st_proof_type: RegisteredPoStProof,
-    // 12D3KooWBRqtxhJCtiLmCwKgAQozJtdGinEDdJGoS5oHw7vCjMGc
+#[derive(Serialize_tuple, Deserialize_tuple, Clone)]
+pub struct CreateMinerParamsReq {
+    pub window_post_proof_type: RegisteredPoStProof,
     #[serde(with = "strict_bytes")]
     pub peer: Vec<u8>,
 }
+impl Cbor for CreateMinerParamsReq {}
+
+#[derive(Serialize_tuple, Deserialize_tuple, Clone)]
+pub struct CreateMinerParams {
+    pub owner: Address,
+    pub worker: Address,
+    pub window_post_proof_type: RegisteredPoStProof,
+    #[serde(with = "strict_bytes")]
+    pub peer: Vec<u8>,
+    pub multiaddrs: Vec<BytesDe>,
+}
+impl Cbor for CreateMinerParams {}
 
 /// Method num 13.
 pub fn create_miner(params: u32) -> Option<RawBytes> {
     let params = sdk::message::params_raw(params).unwrap().1;
     let params = RawBytes::new(params);
-    // let params: CreateMinerParams = params.deserialize().unwrap();
-    // let owner = Address::new_id(1054);  // We cannot get contract id here
+    let req: CreateMinerParamsReq = params.deserialize().unwrap();
+    // caller: who invoke this contract
+    let my_actor_id = sdk::message::receiver();
+    let owner = Address::new_id(my_actor_id);
     let power_actor = Address::new_id(4);
 
-    // params.owner = owner;
-    // let send_params = RawBytes::serialize(params).unwrap();
-    // let send_params = params;
+    let params = CreateMinerParams {
+        owner: owner,
+        worker: owner,
+        window_post_proof_type: req.window_post_proof_type,
+        peer: req.peer,
+        multiaddrs: Vec::new(),
+    };
+    let send_params = RawBytes::serialize(params).unwrap();
 
     let receipt = fvm_sdk::send::send(
         &power_actor,
         2,
-        params,
+        send_params,
         TokenAmount::from_atto(0),
     );
 

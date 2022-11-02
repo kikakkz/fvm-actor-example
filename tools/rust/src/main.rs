@@ -4,6 +4,7 @@ use cid::Cid;
 use std::convert::TryFrom;
 use fvm_ipld_encoding::{
     tuple::{Deserialize_tuple, Serialize_tuple},
+    Cbor, strict_bytes,
 };
 use fvm_shared::sector::StoragePower;
 use fvm_shared::smooth::FilterEstimate;
@@ -69,6 +70,14 @@ pub struct CreateMinerParams {
     pub multiaddrs: Vec<BytesDe>,
 }
 
+#[derive(Serialize_tuple, Deserialize_tuple, Clone, Debug)]
+pub struct CreateMinerParamsReq {
+    pub window_post_proof_type: RegisteredPoStProof,
+    #[serde(with = "strict_bytes")]
+    pub peer: Vec<u8>,
+}
+impl Cbor for CreateMinerParamsReq {}
+
 fn main() {
     let _cid = CidParams {
         cid: Cid::try_from("bafy2bzacea6bvgucghtd66eubqazpknwqqpfywtdgp5qxludjsa6tyd6cxwuy").unwrap(),
@@ -103,6 +112,13 @@ fn main() {
     };
     println!("create miner params 2 original {:?}", _create_miner);
     println!("create miner params 2 {:?}", base64::encode(RawBytes::serialize(_create_miner).unwrap().bytes()));
+
+    let _create_miner_req = CreateMinerParamsReq {
+        window_post_proof_type: RegisteredPoStProof::StackedDRGWindow2KiBV1,
+        peer: PeerId::from_bytes(&params.clone()).unwrap().to_bytes(),
+    };
+    println!("create miner params req 2 original {:?}", _create_miner_req);
+    println!("create miner params req 2 {:?}", base64::encode(RawBytes::serialize(_create_miner_req).unwrap().bytes()));
 
     let params = RawBytes::new(base64::decode("j0YACAAAAABGAAgAAAAARgBQAAAAAEYAUAAAAABLAAvSyfIuWJEFpk1GAAgAAAAARgBQAAAAAEsAC9LJ8i5YkQWmTYJYGAAK64ihzsmDd5PYL3LfvLjaILVstg/zdFcAAlF+YaH8UPCjlsJSKdm0zE69LDpNNAMC2CpYJwABcaDkAiD2gG8Ch5fPq5yTKKpBGFf5F1QQ7GTm9R/r6s0rE2MHxxkIZtgqWCcAAXGg5AIgYwx+zcj8/12XKisOfupB2/pKebaqrvlbsUSF2/Mfef72").unwrap());
     println!("{:?}", params.deserialize::<PowerActorState>().unwrap());
