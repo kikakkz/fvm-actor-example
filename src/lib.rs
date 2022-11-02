@@ -96,6 +96,8 @@ pub fn invoke(params: u32) -> u32 {
         12 => withdraw(params),
         13 => create_miner(params),
         14 => fund_t04(params),
+        15 => create_miner_1(params),
+        16 => take_owner(params),
         _ => abort!(USR_UNHANDLED_MESSAGE, "unrecognized method"),
     };
 
@@ -357,6 +359,7 @@ pub struct CreateMinerParams {
 impl Cbor for CreateMinerParams {}
 
 /// Method num 13.
+/// Here we use this contract address as owner and worker to create a miner in the hacked FVM
 pub fn create_miner(params: u32) -> Option<RawBytes> {
     let params = sdk::message::params_raw(params).unwrap().1;
     let params = RawBytes::new(params);
@@ -449,4 +452,108 @@ pub fn fund_t04(params: u32) -> Option<RawBytes> {
             );
         }
     }
+}
+
+#[derive(Serialize_tuple, Deserialize_tuple, Clone)]
+pub struct CreateMinerParamsReq1 {
+    pub owner: Address,
+    pub window_post_proof_type: RegisteredPoStProof,
+    #[serde(with = "strict_bytes")]
+    pub peer: Vec<u8>,
+}
+impl Cbor for CreateMinerParamsReq1 {}
+
+#[derive(Serialize_tuple, Deserialize_tuple, Debug)]
+pub struct CreateMinerReturn {
+    /// Canonical ID-based address for the actor.
+    pub id_address: Address,
+    /// Re-org safe address for created actor.
+    pub robust_address: Address,
+}
+
+/// Method num 15.
+/// Here we use an account to create miner, then change the owner to this contact id
+pub fn create_miner_1(params: u32) -> Option<RawBytes> {
+    let params = sdk::message::params_raw(params).unwrap().1;
+    let params = RawBytes::new(params);
+    let req: CreateMinerParamsReq1 = params.deserialize().unwrap();
+    // caller: who invoke this contract
+    let power_actor = Address::new_id(4);
+
+    let params = CreateMinerParams {
+        owner: req.owner,
+        worker: req.owner,
+        window_post_proof_type: req.window_post_proof_type,
+        peer: req.peer,
+        multiaddrs: Vec::new(),
+    };
+    let send_params = RawBytes::serialize(params).unwrap();
+
+    let receipt = fvm_sdk::send::send(
+        &power_actor,
+        2,
+        send_params,
+        TokenAmount::from_atto(0),
+    );
+
+    if receipt.is_err() {
+        abort!(
+            USR_ILLEGAL_STATE,
+            "fail create miner: {:?}",
+            receipt.err().unwrap()
+        );
+    }
+
+    let receipt = receipt.unwrap();
+
+    if !receipt.exit_code.is_success() {
+        abort!(
+            USR_ILLEGAL_STATE,
+            "create miner exit_code {:?}",
+            receipt.exit_code
+        );
+    }
+
+    let ret: CreateMinerReturn = RawBytes::deserialize(&receipt.return_data).unwrap();
+    Some(RawBytes::serialize(&ret).unwrap())
+}
+
+/// Method num 16.
+/// Owner set owner to me, i call this to approve
+pub fn take_owner(params: u32) -> Option<RawBytes> {
+    let params = sdk::message::params_raw(params).unwrap().1;
+    let params = RawBytes::new(params);
+    let miner_id: Address = params.deserialize().unwrap();
+    let my_actor_id = sdk::message::receiver();
+    let new_owner = Address::new_id(my_actor_id);
+
+    let send_params = RawBytes::serialize(new_owner).unwrap();
+
+    let receipt = fvm_sdk::send::send(
+        &miner_id,
+        23,
+        send_params,
+        TokenAmount::from_atto(0),
+    );
+
+    if receipt.is_err() {
+        abort!(
+            USR_ILLEGAL_STATE,
+            "fail change owner: {:?}",
+            receipt.err().unwrap()
+        );
+    }
+
+    let receipt = receipt.unwrap();
+
+    if !receipt.exit_code.is_success() {
+        abort!(
+            USR_ILLEGAL_STATE,
+            "change owner exit_code {:?}",
+            receipt.exit_code
+        );
+    }
+
+    let ret = to_vec(format!("ChangeOwner {:?} -> {:?}", miner_id, new_owner).as_str()).unwrap();
+    Some(RawBytes::new(ret))
 }

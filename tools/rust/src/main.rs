@@ -78,6 +78,23 @@ pub struct CreateMinerParamsReq {
 }
 impl Cbor for CreateMinerParamsReq {}
 
+#[derive(Serialize_tuple, Deserialize_tuple, Clone, Debug)]
+pub struct CreateMinerParamsReq1 {
+    pub owner: Address,
+    pub window_post_proof_type: RegisteredPoStProof,
+    #[serde(with = "strict_bytes")]
+    pub peer: Vec<u8>,
+}
+impl Cbor for CreateMinerParamsReq1 {}
+
+#[derive(Serialize_tuple, Deserialize_tuple, Debug)]
+pub struct CreateMinerReturn {
+    /// Canonical ID-based address for the actor.
+    pub id_address: Address,
+    /// Re-org safe address for created actor.
+    pub robust_address: Address,
+}
+
 fn main() {
     let _cid = CidParams {
         cid: Cid::try_from("bafy2bzacea6bvgucghtd66eubqazpknwqqpfywtdgp5qxludjsa6tyd6cxwuy").unwrap(),
@@ -120,6 +137,14 @@ fn main() {
     println!("create miner params req 2 original {:?}", _create_miner_req);
     println!("create miner params req 2 {:?}", base64::encode(RawBytes::serialize(_create_miner_req).unwrap().bytes()));
 
+    let _create_miner_req1 = CreateMinerParamsReq1 {
+        owner: Address::new_id(100),
+        window_post_proof_type: RegisteredPoStProof::StackedDRGWindow2KiBV1,
+        peer: PeerId::from_bytes(&params.clone()).unwrap().to_bytes(),
+    };
+    println!("create miner params req 3 original {:?}", _create_miner_req1);
+    println!("create miner params req 3 {:?}", base64::encode(RawBytes::serialize(_create_miner_req1).unwrap().bytes()));
+
     let params = RawBytes::new(base64::decode("j0YACAAAAABGAAgAAAAARgBQAAAAAEYAUAAAAABLAAvSyfIuWJEFpk1GAAgAAAAARgBQAAAAAEsAC9LJ8i5YkQWmTYJYGAAK64ihzsmDd5PYL3LfvLjaILVstg/zdFcAAlF+YaH8UPCjlsJSKdm0zE69LDpNNAMC2CpYJwABcaDkAiD2gG8Ch5fPq5yTKKpBGFf5F1QQ7GTm9R/r6s0rE2MHxxkIZtgqWCcAAXGg5AIgYwx+zcj8/12XKisOfupB2/pKebaqrvlbsUSF2/Mfef72").unwrap());
     println!("{:?}", params.deserialize::<PowerActorState>().unwrap());
 
@@ -157,4 +182,13 @@ fn main() {
 
     let params = RawBytes::new(base64::decode("eQGSUGFyYW1zIENyZWF0ZU1pbmVyUGFyYW1zIHsgb3duZXI6IEFkZHJlc3MgeyBwYXlsb2FkOiBJRCgxMTEzKSB9LCB3b3JrZXI6IEFkZHJlc3MgeyBwYXlsb2FkOiBJRCgxMDU1KSB9LCB3aW5kb3dfcG9fc3RfcHJvb2ZfdHlwZTogU3RhY2tlZERSR1dpbmRvdzMyR2lCVjEsIHBlZXI6IFsxMjAsIDUyLCA0OSwgNTAsIDY4LCA1MSwgNzUsIDExMSwgMTExLCA4NywgNjYsIDgyLCAxMTMsIDExNiwgMTIwLCAxMDQsIDc0LCA2NywgMTE2LCAxMDUsIDc2LCAxMDksIDY3LCAxMTksIDc1LCAxMDMsIDY1LCA4MSwgMTExLCAxMjIsIDc0LCAxMTYsIDEwMCwgNzEsIDEwNSwgMTEwLCA2OSwgNjgsIDEwMCwgNzQsIDcxLCAxMTEsIDgzLCA1MywgMTExLCA3MiwgMTE5LCA1NSwgMTE4LCA2NywgMTA2LCA3NywgNzEsIDk5XSB9").unwrap());
     println!("{:?}", params.deserialize::<String>().unwrap());
+
+    let params = RawBytes::new(base64::decode("eNdDcmVhdGVNaW5lciBDcmVhdGVNaW5lclJldHVybiB7IGlkX2FkZHJlc3M6IEFkZHJlc3MgeyBwYXlsb2FkOiBJRCgxMDA3KSB9LCByb2J1c3RfYWRkcmVzczogQWRkcmVzcyB7IHBheWxvYWQ6IEFjdG9yKFs1NCwgMjM2LCAyMjUsIDE4LCAzMiwgMjMsIDI0NSwgMjAwLCAxMjMsIDExNCwgNTAsIDI1MywgMjYsIDEwOCwgMTcxLCAxMzgsIDIyMSwgMjM4LCAyNTUsIDExOF0pIH0gfQ==").unwrap());
+    println!("{:?}", params.deserialize::<String>().unwrap());
+
+    let params = RawBytes::new(base64::decode("gkMA8gdVAoGNqG6MBkCrIwv1WdiYryBg3ue6").unwrap());
+    println!("{:?}", params.deserialize::<CreateMinerReturn>().unwrap());
+
+    let params = Address::new_id(1011);
+    println!("create miner params req 3 {:?}", base64::encode(RawBytes::serialize(params).unwrap().bytes()));
 }
