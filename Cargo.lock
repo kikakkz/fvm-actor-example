@@ -306,7 +306,6 @@ dependencies = [
 [[package]]
 name = "fvm_ipld_blockstore"
 version = "0.1.1"
-source = "git+https://github.com/filecoin-project/ref-fvm#cf5ba35f12c74cf425ed71ded568e506290e1db2"
 dependencies = [
  "anyhow",
  "cid",
@@ -316,7 +315,6 @@ dependencies = [
 [[package]]
 name = "fvm_ipld_encoding"
 version = "0.3.0"
-source = "git+https://github.com/filecoin-project/ref-fvm#cf5ba35f12c74cf425ed71ded568e506290e1db2"
 dependencies = [
  "anyhow",
  "cid",
@@ -332,7 +330,6 @@ dependencies = [
 [[package]]
 name = "fvm_ipld_hamt"
 version = "0.6.0"
-source = "git+https://github.com/filecoin-project/ref-fvm#cf5ba35f12c74cf425ed71ded568e506290e1db2"
 dependencies = [
  "anyhow",
  "byteorder",
@@ -351,7 +348,6 @@ dependencies = [
 [[package]]
 name = "fvm_sdk"
 version = "3.0.0-alpha.8"
-source = "git+https://github.com/filecoin-project/ref-fvm#cf5ba35f12c74cf425ed71ded568e506290e1db2"
 dependencies = [
  "cid",
  "fvm_ipld_encoding",
@@ -365,7 +361,6 @@ dependencies = [
 [[package]]
 name = "fvm_shared"
 version = "3.0.0-alpha.8"
-source = "git+https://github.com/filecoin-project/ref-fvm#cf5ba35f12c74cf425ed71ded568e506290e1db2"
 dependencies = [
  "anyhow",
  "blake2b_simd",
