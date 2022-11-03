@@ -138,7 +138,17 @@ pub fn say_hello() -> Option<RawBytes> {
     state.count += 1;
     state.save();
 
-    let ret = to_vec(format!("Hello world #{}!", &state.count).as_str());
+    let caller = sdk::message::caller();
+    let origin = sdk::message::origin();
+    let receiver = sdk::message::receiver();
+
+    let ret = to_vec(
+        format!(
+            "Hello world {caller}/{origin}/{receiver} #{}!",
+            &state.count
+        )
+        .as_str(),
+    );
     match ret {
         Ok(ret) => Some(RawBytes::new(ret)),
         Err(err) => {
@@ -551,6 +561,12 @@ mod test {
     use fvm_shared::error::ExitCode;
     use fvm_shared::sector::RegisteredPoStProof;
 
+    #[test]
+    fn simple() {
+        let people = "Rustaceans";
+        println!("{people}-{}", format!("Hello {people}!"));
+    }
+
     #[derive(Debug, Clone, Serialize_tuple, Deserialize_tuple)]
     pub struct CreateMinerParamsReq1 {
         pub owner: Address,
@@ -564,7 +580,7 @@ mod test {
 
     #[test]
     fn decode_actor_result() {
-        let params = RawBytes::new(decode("b0hlbGxvIHdvcmxkICMxIQ==").unwrap());
+        let params = RawBytes::new(decode("eBxIZWxsbyB3b3JsZCAxMDAvMTAwLzEwMDIgIzEh").unwrap());
         println!("{:?}", params.deserialize::<String>().unwrap());
     }
 
@@ -572,7 +588,7 @@ mod test {
     #[test]
     fn decode_create_miner_params() {
         let params = RawBytes::new(
-            decode("hUMA6AdDAOgHBlgmACQIARIgMAuWh+7R9XMi0RKVhqAYQ38gJex/HGAp+1jvhkwkRPaA").unwrap(),
+            decode("hUMA6AdDAOgHBlgmACQIARIgVD/C8T0PxrsQr/3+TRPr9bhWXFgTlH5CYgUOlZOgI66A").unwrap(),
         );
         println!(
             "{:?}",

@@ -8,18 +8,20 @@
 
 + builtin-actors
 ```sh
-allinone: bundle-devnet bundle-devnet-wasm bundle-wallaby bundle-mainnet bundle-caterpillarnet bundle-butterflynet bundle-testing bundle-calibrationnet
+allinone: all-bundles bundle-wallaby bundle-devnet-wasm
 	cd ./output && \
-	tar -cf v8.tar.zst --use-compress-program "zstd -19" -- *.car && \
+	tar -cf v8.tar.zst --use-compress-program zstd -- *.car && \
 	cp -f v8.tar.zst ../../lotus/build/actors/v8.tar.zst && \
 	cp -f builtin-actors-butterflynet.car ../../lotus/build/genesis/butterflynet.car && \
 	cp -f builtin-actors-calibrationnet.car ../../lotus/build/genesis/calibnet.car && \
-	cp -f builtin-actors-mainnet.car ../../lotus/build/genesis/mainnet.car && \
 	cp -f builtin-actors-devnet-wasm.car ../../lotus/build/genesis/devnet.car && \
+	cp -f builtin-actors-mainnet.car ../../lotus/build/genesis/mainnet.car && \
 	rm ./*.car ./*.zst && \
-	cd ../../lotus/build/actors && \
-	make -C ../../ bundle-gen && \
-	cd ../../../builtin-actors
+	cd ../../lotus && \
+	(make gen 2>/dev/null || make gen) && \
+	git checkout chain/state && \
+	make clean 2k && \
+	cd ../builtin-actors
 .PHONY: allinone
 ```
 
@@ -51,9 +53,17 @@ make gen
 
 > lotus state list-miners
 
-3. 产看当前所部署的 **builtin-actors** cid
+3. 查看 **miner** 信息
+
+> lotus state miner-info miner-id
+
+4. 产看当前所部署的 **builtin-actors** cid
 
 > lotus state actor-cids
+
+5. 查看 **actor** 信息
+
+> lotus state get-actor actor-id
 
 ### chain operator
 
