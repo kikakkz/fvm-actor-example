@@ -7,31 +7,32 @@
 3. [ref-vm](https://github.com/filecoin-project/ref-fvm/tree/fvm%403.0.0-alpha.5)
 
 + builtin-actors
-
-```toml
-sector-default = ["sector-8m", "sector-64g", "sector-32g"]
-```
-
 ```sh
-all-bundles: bundle-mainnet bundle-caterpillarnet bundle-butterflynet bundle-calibrationnet bundle-devnet bundle-wallaby bundle-devnet-wasm bundle-testing
-
-allinone:
+allinone: bundle-devnet bundle-devnet-wasm bundle-wallaby bundle-mainnet bundle-caterpillarnet bundle-butterflynet bundle-testing bundle-calibrationnet
 	cd ./output && \
 	tar -cf v8.tar.zst --use-compress-program "zstd -19" -- *.car && \
-	cp v8.tar.zst ../../lotus/build/actors/v8.tar.zst && \
-	cp builtin-actors-butterflynet.car ../../lotus/build/genesis/butterflynet.car && \
-	cp builtin-actors-calibrationnet.car ../../lotus/build/genesis/calibnet.car && \
-	cp builtin-actors-devnet-wasm.car ../../lotus/build/genesis/devnet.car && \
-	cp builtin-actors-mainnet.car ../../lotus/build/genesis/mainnet.car && \
-	cp builtin-actors-wallaby.car ../../lotus/build/genesis/wallabynet.car && \
-	cd ../../lotus && \
-	make gen && \
-	cd ../builtin-actors
-
+	cp -f v8.tar.zst ../../lotus/build/actors/v8.tar.zst && \
+	cp -f builtin-actors-butterflynet.car ../../lotus/build/genesis/butterflynet.car && \
+	cp -f builtin-actors-calibrationnet.car ../../lotus/build/genesis/calibnet.car && \
+	cp -f builtin-actors-mainnet.car ../../lotus/build/genesis/mainnet.car && \
+	cp -f builtin-actors-devnet-wasm.car ../../lotus/build/genesis/devnet.car && \
+	rm ./*.car ./*.zst && \
+	cd ../../lotus/build/actors && \
+	make -C ../../ bundle-gen && \
+	cd ../../../builtin-actors
 .PHONY: allinone
 ```
 
 + lotus
+```sh
+export LOTUS_USE_FVM_CUSTOM_BUNDLE=1
+export LOTUS_VM_ENABLE_TRACING=1
+```
+
+```go
+// chain/state/statetree.go
+case network.Version13, network.Version14, network.Version15, network.Version16:=>case network.Version13, network.Version14, network.Version15, network.Version16, network.Version(18):
+```
 ```sh
 # 如果出错,修改api/proxy_gen.go 解决冲突, 重新编译
 make gen
