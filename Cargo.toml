@@ -14,6 +14,7 @@ fvm_ipld_encoding = { git = "https://github.com/filecoin-project/ref-fvm.git" }
 serde = { version = "1.0.136", features = ["derive"] }
 serde_tuple = "0.5"
 anyhow = "1.0.56"
+fil-actors-runtime = { package = "fil_builtin_actors_bundle", git = "https://github.com/filecoin-project/builtin-actors", branch = "next", features = ["m2-native"] }
 
 [dev-dependencies]
 fvm = { git = "https://github.com/filecoin-project/ref-fvm.git" }
