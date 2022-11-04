@@ -8,11 +8,15 @@ import (
 
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/abi"
+
+	"github.com/filecoin-project/lotus/chain/actors"
 	power6 "github.com/filecoin-project/specs-actors/v6/actors/builtin/power"
 	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/libp2p/go-libp2p/core/peer"
 )
 
+// 相关约束
+//
 func TestCreateMiner(t *testing.T) {
 	////////////////////////////// create miner
 	// lotus-miner net id
@@ -45,7 +49,7 @@ func TestCreateMiner(t *testing.T) {
 	cmp := &power6.CreateMinerParams{
 		Owner:               owner,
 		Worker:              owner,
-		WindowPoStProofType: abi.RegisteredPoStProof_StackedDrgWindow8MiBV1,
+		WindowPoStProofType: abi.RegisteredPoStProof_StackedDrgWindow2KiBV1,
 		Peer:                abi.PeerID(peerid),
 		Multiaddrs:          nil,
 	}
@@ -54,11 +58,19 @@ func TestCreateMiner(t *testing.T) {
 	if err := cmp.MarshalCBOR(&buf); err != nil {
 		t.Error(err)
 	}
-
 	base64Ofcmp := base64.StdEncoding.EncodeToString(buf.Bytes())
-
 	// this args used for lotus chain invoke
 	t.Logf("create miner base64 args %v", base64Ofcmp)
+
+	base64Ofcmpoffs, err := actors.SerializeParams(cmp)
+	if err != nil {
+		t.Error(err)
+	}
+	base64Ofcmpoff := base64.StdEncoding.EncodeToString(base64Ofcmpoffs)
+	// this args used for lotus chain invoke
+	t.Logf("create miner base64 args %v", base64Ofcmpoff)
+
+	t.Logf("should equal %v == %v %v", base64Ofcmp, base64Ofcmpoff, base64Ofcmp == base64Ofcmpoff)
 }
 
 func TestChangeMinerOwner(t *testing.T) {

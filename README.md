@@ -3,7 +3,7 @@
 ## 涉及相关的仓库和需要的操作
 
 1. [lotus](https://github.com/filecoin-project/lotus/tree/experimental/fvm-m2)
-2. [builtin-actors](https://github.com/filecoin-project/builtin-actors/tree/next)
+2. [builtin-actors](https://github.com/filecoin-project/builtin-actors/tree/dev/20221029-fip44)
 3. [ref-vm](https://github.com/filecoin-project/ref-fvm/tree/fvm%403.0.0-alpha.5)
 
 + builtin-actors
@@ -20,8 +20,7 @@ allinone: all-bundles bundle-wallaby bundle-devnet-wasm
 	cd ../../lotus && \
 	(make gen 2>/dev/null || make gen) && \
 	git checkout chain/state && \
-	make clean 2k && \
-	cd ../builtin-actors
+	make clean 2k
 .PHONY: allinone
 ```
 

@@ -358,7 +358,7 @@ pub struct CreateMinerParamsReq {
 }
 impl Cbor for CreateMinerParamsReq {}
 
-#[derive(Serialize_tuple, Deserialize_tuple, Clone)]
+#[derive(Debug, Serialize_tuple, Deserialize_tuple, Clone)]
 pub struct CreateMinerParams {
     pub owner: Address,
     pub worker: Address,
@@ -381,7 +381,7 @@ pub fn create_miner(params: u32) -> Option<RawBytes> {
     let power_actor = Address::new_id(4);
 
     let params = CreateMinerParams {
-        owner: owner,
+        owner,
         worker: owner,
         window_post_proof_type: req.window_post_proof_type,
         peer: req.peer,
@@ -455,42 +455,34 @@ pub fn fund_t04(params: u32) -> Option<RawBytes> {
     }
 }
 
-#[derive(Serialize_tuple, Deserialize_tuple, Clone)]
-pub struct CreateMinerParamsReq1 {
-    pub owner: Address,
-    pub worker: Address,
-    pub window_post_proof_type: RegisteredPoStProof,
-    #[serde(with = "strict_bytes")]
-    pub peer: Vec<u8>,
-    pub multiaddrs: Vec<BytesDe>,
-}
-impl Cbor for CreateMinerParamsReq1 {}
-
 #[derive(Serialize_tuple, Deserialize_tuple, Debug)]
 pub struct CreateMinerReturn {
     /// Canonical ID-based address for the actor.
     pub id_address: Address,
     /// Re-org safe address for created actor.
     pub robust_address: Address,
+    pub out: CreateMinerParams,
 }
+impl Cbor for CreateMinerReturn {}
 
 /// Method num 15.
 /// Here we use an account to create miner, then change the owner to this contact id
 pub fn create_miner_1(params: u32) -> Option<RawBytes> {
     let params = sdk::message::params_raw(params).unwrap().1;
     let params = RawBytes::new(params);
-    let req: CreateMinerParamsReq1 = params.deserialize().unwrap();
+    let req = params.deserialize::<CreateMinerParams>().unwrap();
+
     // caller: who invoke this contract
     let power_actor = Address::new_id(4);
 
     let params = CreateMinerParams {
         owner: req.owner,
-        worker: req.owner,
+        worker: req.worker,
         window_post_proof_type: req.window_post_proof_type,
         peer: req.peer,
         multiaddrs: Vec::new(),
     };
-    let send_params = RawBytes::serialize(params).unwrap();
+    let send_params = RawBytes::serialize(params.clone()).unwrap();
 
     let receipt = fvm_sdk::send::send(&power_actor, 2, send_params, TokenAmount::from_atto(0));
 
@@ -508,11 +500,13 @@ pub fn create_miner_1(params: u32) -> Option<RawBytes> {
         abort!(
             USR_ILLEGAL_STATE,
             "create miner exit_code {:?}",
-            receipt.exit_code
+            params.clone()
         );
     }
 
-    let ret: CreateMinerReturn = RawBytes::deserialize(&receipt.return_data).unwrap();
+    let mut ret: CreateMinerReturn = RawBytes::deserialize(&receipt.return_data).unwrap();
+    ret.out = params;
+
     Some(RawBytes::serialize(&ret).unwrap())
 }
 
@@ -554,12 +548,29 @@ pub fn take_owner(params: u32) -> Option<RawBytes> {
 #[cfg(test)]
 mod test {
     use base64::decode;
-    use fvm_ipld_encoding::strict_bytes;
-    use fvm_ipld_encoding::tuple::{Deserialize_tuple, Serialize_tuple};
-    use fvm_ipld_encoding::{BytesDe, Cbor, RawBytes};
-    use fvm_shared::address::Address;
-    use fvm_shared::error::ExitCode;
-    use fvm_shared::sector::RegisteredPoStProof;
+    use cid::Cid;
+    use fvm_ipld_encoding::RawBytes;
+
+    ////////////////// encode
+    ///
+    // #[test]
+    // fn encode_create_miner_params() {
+    //     let params = PeerId::from_str("12D3KooWBRqtxhJCtiLmCwKgAQozJtdGinEDdJGoS5oHw7vCjMGc")
+    //         .unwrap()
+    //         .to_bytes();
+    //     let params: super::CreateMinerParams = super::CreateMinerParams {
+    //         owner: Address::new_id(100),
+    //         worker: Address::new_id(100),
+    //         window_post_proof_type: RegisteredPoStProof::StackedDRGWindow2KiBV1,
+    //         peer: encode(params),
+    //         multiaddrs: vec![],
+    //     };
+
+    //     println!(
+    //         "create miner params {:?}",
+    //         base64::encode(RawBytes::serialize(params).unwrap().bytes())
+    //     );
+    // }
 
     #[test]
     fn simple() {
@@ -567,54 +578,48 @@ mod test {
         println!("{people}-{}", format!("Hello {people}!"));
     }
 
-    #[derive(Debug, Clone, Serialize_tuple, Deserialize_tuple)]
-    pub struct CreateMinerParamsReq1 {
-        pub owner: Address,
-        pub worker: Address,
-        pub window_post_proof_type: RegisteredPoStProof,
-        #[serde(with = "strict_bytes")]
-        pub peer: Vec<u8>,
-        pub multiaddrs: Vec<BytesDe>,
-    }
-    impl Cbor for CreateMinerParamsReq1 {}
-
     #[test]
     fn decode_actor_result() {
-        let params = RawBytes::new(decode("eBxIZWxsbyB3b3JsZCAxMDAvMTAwLzEwMDIgIzEh").unwrap());
+        // eBxIZWxsbyB3b3JsZCAxMDAvMTAwLzEwMDEgIzEh => Hello world 100/100/1001 #1!
+        let params = RawBytes::new(decode("eBxIZWxsbyB3b3JsZCAxMDAvMTAwLzEwMDEgIzEh").unwrap());
         println!("{:?}", params.deserialize::<String>().unwrap());
+    }
+
+    #[test]
+    fn decode_cid() {
+        // AXGg5AIgieQ4WRLcszZ0PVsJEwtyM7+ZCo2wfRfVCiy7fJNS17g=
+        // => bafy2bzacece6ioczclolgntuhvnqseyloiz37gikrwyh2f6vbiwlw7etkll3q
+        let params =
+            RawBytes::new(decode("AXGg5AIgieQ4WRLcszZ0PVsJEwtyM7+ZCo2wfRfVCiy7fJNS17g=").unwrap());
+
+        println!("{:?}", params.bytes());
+
+        let _cid = Cid::try_from(params.bytes());
+        match _cid {
+            Ok(info) => println!("decode cid {:?}", info),
+            Err(err) => println!("decode cid error{:?}", err),
+        };
     }
 
     // lotus chain invoke t01001 15 hUMA6AdDAOgHBlgmACQIARIgMAuWh+7R9XMi0RKVhqAYQ38gJex/HGAp+1jvhkwkRPaA
     #[test]
     fn decode_create_miner_params() {
         let params = RawBytes::new(
-            decode("hUMA6AdDAOgHBlgmACQIARIgVD/C8T0PxrsQr/3+TRPr9bhWXFgTlH5CYgUOlZOgI66A").unwrap(),
+            decode("hUMA6AdDAOgHBVgmACQIARIgfgFSsbUF+lgzFx1jkUmdJ2RR49XFrhJAUTThjZsxwBiA").unwrap(),
         );
+
         println!(
             "{:?}",
-            params.deserialize::<CreateMinerParamsReq1>().unwrap()
+            params.deserialize::<super::CreateMinerParams>().unwrap()
         );
     }
 
-    #[derive(Debug, PartialEq, Eq, Clone, Serialize_tuple, Deserialize_tuple)]
-    pub struct Receipt {
-        pub exit_code: ExitCode,
-        pub return_data: RawBytes,
-        pub gas_used: i64,
-    }
-    impl Cbor for Receipt {}
-
-    #[derive(Serialize_tuple, Deserialize_tuple, Debug)]
-    pub struct CreateMinerReturn {
-        /// Canonical ID-based address for the actor.
-        pub id_address: Address,
-        /// Re-org safe address for created actor.
-        pub robust_address: Address,
-    }
-
-    #[test]
-    fn decode_return_data() {
-        let params = RawBytes::new(decode("gkMA6wdVAhyo4Gl+ozVW/S2NiFl7ez22f2GI").unwrap());
-        println!("{:?}", params.deserialize::<CreateMinerReturn>().unwrap());
-    }
+    // #[test]
+    // fn decode_return_data() {
+    //     let params = RawBytes::new(decode("gkMA6wdVAhyo4Gl+ozVW/S2NiFl7ez22f2GI").unwrap());
+    //     println!(
+    //         "{:?}",
+    //         params.deserialize::<super::CreateMinerReturn>().unwrap()
+    //     );
+    // }
 }
