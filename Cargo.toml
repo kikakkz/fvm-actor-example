@@ -16,6 +16,7 @@ fvm_shared = { version = "3.0.0-alpha.8", path = "../ref-fvm/shared" }
 fvm_ipld_encoding = { version = "0.3.0", path = "../ref-fvm/ipld/encoding" }
 fvm_ipld_blockstore = { version = "0.1.1", path = "../ref-fvm/ipld/blockstore" }
 fvm_ipld_hamt = { version = "0.6.0", path = "../ref-fvm/ipld/hamt" }
+# fil-actors-runtime = { package = "fil_builtin_actors_bundle", git = "https://github.com/filecoin-project/builtin-actors", branch = "next", features = ["m2-native"] }
 
 [dev-dependencies]
 fvm_sdk = { version = "3.0.0-alpha.8", path = "../ref-fvm/sdk" }
@@ -24,7 +25,6 @@ fvm_ipld_hamt = { version = "0.6.0", path = "../ref-fvm/ipld/hamt" }
 libsecp256k1 = { version = "0.7" }
 rand = "0.8"
 rand_chacha = "0.3"
-anyhow = "1.0.52"
 
 [build-dependencies]
 substrate-wasm-builder = "4.0.0"
