@@ -8,7 +8,7 @@ require (
 	github.com/filecoin-project/lotus v1.17.2
 	github.com/filecoin-project/specs-actors/v6 v6.0.2
 	github.com/ipfs/go-cid v0.3.2
-	github.com/libp2p/go-libp2p-core v0.20.0
+	github.com/libp2p/go-libp2p v0.23.2
 	github.com/whyrusleeping/cbor-gen v0.0.0-20220514204315-f29c37e9c44c
 	golang.org/x/xerrors v0.0.0-20220609144429-65e65417b02f
 )
@@ -37,7 +37,6 @@ require (
 	github.com/ipfs/go-log/v2 v2.5.1 // indirect
 	github.com/klauspost/cpuid/v2 v2.1.1 // indirect
 	github.com/libp2p/go-buffer-pool v0.1.0 // indirect
-	github.com/libp2p/go-libp2p v0.23.2 // indirect
 	github.com/libp2p/go-openssl v0.1.0 // indirect
 	github.com/mattn/go-isatty v0.0.16 // indirect
 	github.com/mattn/go-pointer v0.0.1 // indirect
