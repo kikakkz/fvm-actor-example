@@ -3,20 +3,20 @@ mod blockstore;
 use crate::blockstore::Blockstore;
 use cid::multihash::Code;
 use cid::Cid;
-use fvm_ipld_encoding::tuple::{Deserialize_tuple, Serialize_tuple};
-use fvm_ipld_encoding::{to_vec, CborStore, RawBytes, DAG_CBOR, BytesDe, Cbor};
 use fvm_ipld_encoding::strict_bytes;
+use fvm_ipld_encoding::tuple::{Deserialize_tuple, Serialize_tuple};
+use fvm_ipld_encoding::{to_vec, BytesDe, Cbor, CborStore, RawBytes, DAG_CBOR};
+use fvm_ipld_hamt::Hamt;
 use fvm_sdk as sdk;
 use fvm_sdk::NO_DATA_BLOCK_ID;
-use fvm_shared::ActorID;
+use fvm_shared::address::Address;
 use fvm_shared::bigint::bigint_ser;
+use fvm_shared::clock::ChainEpoch;
 use fvm_shared::econ::TokenAmount;
 use fvm_shared::sector::{RegisteredPoStProof, StoragePower};
-use fvm_shared::clock::ChainEpoch;
 use fvm_shared::smooth::FilterEstimate;
-use fvm_ipld_hamt::Hamt;
+use fvm_shared::ActorID;
 use fvm_shared::{HAMT_BIT_WIDTH, METHOD_SEND};
-use fvm_shared::address::Address;
 
 /// A macro to abort concisely.
 /// This should be part of the SDK as it's very handy.
@@ -138,7 +138,17 @@ pub fn say_hello() -> Option<RawBytes> {
     state.count += 1;
     state.save();
 
-    let ret = to_vec(format!("Hello world #{}!", &state.count).as_str());
+    let caller = sdk::message::caller();
+    let origin = sdk::message::origin();
+    let receiver = sdk::message::receiver();
+
+    let ret = to_vec(
+        format!(
+            "Hello world {caller}/{origin}/{receiver} #{}!",
+            &state.count
+        )
+        .as_str(),
+    );
     match ret {
         Ok(ret) => Some(RawBytes::new(ret)),
         Err(err) => {
@@ -178,15 +188,13 @@ pub fn echo_raw_bytes(params: u32) -> Option<RawBytes> {
 
 #[derive(Debug, Serialize_tuple, Deserialize_tuple)]
 pub struct CidParams {
-    pub cid: Cid
+    pub cid: Cid,
 }
 
 /// Method num 5.
 pub fn get_state_cid_cbor() -> Option<RawBytes> {
     let state_cid = sdk::sself::root().unwrap();
-    let cid_for_cbor = CidParams {
-        cid: state_cid,
-    };
+    let cid_for_cbor = CidParams { cid: state_cid };
     Some(RawBytes::serialize(cid_for_cbor).unwrap())
 }
 
@@ -294,19 +302,26 @@ pub fn get_power_actor_miners(params: u32) -> Option<RawBytes> {
     let params: CidParams = params.deserialize().unwrap();
     let state_cid = params.cid;
 
-    let state = Blockstore.get_cbor::<PowerActorState>(&state_cid).unwrap().unwrap();
-    let claims = Hamt::<Blockstore, _>::load_with_bit_width(&state.claims, Blockstore, HAMT_BIT_WIDTH).unwrap();
+    let state = Blockstore
+        .get_cbor::<PowerActorState>(&state_cid)
+        .unwrap()
+        .unwrap();
+    let claims =
+        Hamt::<Blockstore, _>::load_with_bit_width(&state.claims, Blockstore, HAMT_BIT_WIDTH)
+            .unwrap();
     let mut miners = Vec::new();
-    claims.for_each(|k, _: &Claim| {
-        miners.push(Address::from_bytes(&k.0)?);
-        Ok(())
-    }).ok()?;
+    claims
+        .for_each(|k, _: &Claim| {
+            miners.push(Address::from_bytes(&k.0)?);
+            Ok(())
+        })
+        .ok()?;
     Some(RawBytes::serialize(&miners).unwrap())
 }
 
 #[derive(Debug, Deserialize_tuple)]
 pub struct WithdrawalParams {
-    pub amount: TokenAmount
+    pub amount: TokenAmount,
 }
 
 /// Method num 12.
@@ -318,15 +333,11 @@ pub fn withdraw(params: u32) -> Option<RawBytes> {
     let address = Address::new_id(caller);
     let send_params = RawBytes::default();
 
-    let _receipt = fvm_sdk::send::send(
-        &address,
-        METHOD_SEND,
-        send_params,
-        params.amount.clone(),
-    ).unwrap();
+    let _receipt =
+        fvm_sdk::send::send(&address, METHOD_SEND, send_params, params.amount.clone()).unwrap();
 
     let ret = to_vec(format!("Withdraw {:?} => f0{}", params, caller).as_str());
-    
+
     match ret {
         Ok(ret) => Some(RawBytes::new(ret)),
         Err(err) => {
@@ -347,7 +358,7 @@ pub struct CreateMinerParamsReq {
 }
 impl Cbor for CreateMinerParamsReq {}
 
-#[derive(Serialize_tuple, Deserialize_tuple, Clone)]
+#[derive(Debug, Serialize_tuple, Deserialize_tuple, Clone)]
 pub struct CreateMinerParams {
     pub owner: Address,
     pub worker: Address,
@@ -370,7 +381,7 @@ pub fn create_miner(params: u32) -> Option<RawBytes> {
     let power_actor = Address::new_id(4);
 
     let params = CreateMinerParams {
-        owner: owner,
+        owner,
         worker: owner,
         window_post_proof_type: req.window_post_proof_type,
         peer: req.peer,
@@ -378,20 +389,12 @@ pub fn create_miner(params: u32) -> Option<RawBytes> {
     };
     let send_params = RawBytes::serialize(params).unwrap();
 
-    let receipt = fvm_sdk::send::send(
-        &power_actor,
-        2,
-        send_params,
-        TokenAmount::from_atto(0),
-    );
+    let receipt = fvm_sdk::send::send(&power_actor, 2, send_params, TokenAmount::from_atto(0));
 
     match receipt {
         Ok(receipt) => {
             if !receipt.exit_code.is_success() {
-                abort!(
-                    USR_ILLEGAL_STATE,
-                    "fail create miner"
-                );
+                abort!(USR_ILLEGAL_STATE, "fail create miner");
             }
 
             let ret = to_vec(
@@ -401,7 +404,8 @@ pub fn create_miner(params: u32) -> Option<RawBytes> {
                     // receipt.return_data.deserialize::<String>().unwrap(),
                     receipt.return_data,
                     receipt.gas_used,
-                ).as_str(),
+                )
+                .as_str(),
             );
 
             match ret {
@@ -414,13 +418,9 @@ pub fn create_miner(params: u32) -> Option<RawBytes> {
                     );
                 }
             }
-        },
+        }
         Err(err) => {
-            abort!(
-                USR_ILLEGAL_STATE,
-                "fail create miner: {:?}",
-                err
-            );
+            abort!(USR_ILLEGAL_STATE, "fail create miner: {:?}", err);
         }
     }
 }
@@ -438,7 +438,8 @@ pub fn fund_t04(params: u32) -> Option<RawBytes> {
         METHOD_SEND,
         send_params,
         params.amount.clone(),
-    ).unwrap();
+    )
+    .unwrap();
 
     let ret = to_vec(format!("Withdraw {:?} => f04", params).as_str());
 
@@ -454,47 +455,36 @@ pub fn fund_t04(params: u32) -> Option<RawBytes> {
     }
 }
 
-#[derive(Serialize_tuple, Deserialize_tuple, Clone)]
-pub struct CreateMinerParamsReq1 {
-    pub owner: Address,
-    pub window_post_proof_type: RegisteredPoStProof,
-    #[serde(with = "strict_bytes")]
-    pub peer: Vec<u8>,
-}
-impl Cbor for CreateMinerParamsReq1 {}
-
 #[derive(Serialize_tuple, Deserialize_tuple, Debug)]
 pub struct CreateMinerReturn {
     /// Canonical ID-based address for the actor.
     pub id_address: Address,
     /// Re-org safe address for created actor.
     pub robust_address: Address,
+    pub out: CreateMinerParams,
 }
+impl Cbor for CreateMinerReturn {}
 
 /// Method num 15.
 /// Here we use an account to create miner, then change the owner to this contact id
 pub fn create_miner_1(params: u32) -> Option<RawBytes> {
     let params = sdk::message::params_raw(params).unwrap().1;
     let params = RawBytes::new(params);
-    let req: CreateMinerParamsReq1 = params.deserialize().unwrap();
+    let req = params.deserialize::<CreateMinerParams>().unwrap();
+
     // caller: who invoke this contract
     let power_actor = Address::new_id(4);
 
     let params = CreateMinerParams {
         owner: req.owner,
-        worker: req.owner,
+        worker: req.worker,
         window_post_proof_type: req.window_post_proof_type,
         peer: req.peer,
         multiaddrs: Vec::new(),
     };
-    let send_params = RawBytes::serialize(params).unwrap();
+    let send_params = RawBytes::serialize(params.clone()).unwrap();
 
-    let receipt = fvm_sdk::send::send(
-        &power_actor,
-        2,
-        send_params,
-        TokenAmount::from_atto(0),
-    );
+    let receipt = fvm_sdk::send::send(&power_actor, 2, send_params, TokenAmount::from_atto(0));
 
     if receipt.is_err() {
         abort!(
@@ -510,11 +500,13 @@ pub fn create_miner_1(params: u32) -> Option<RawBytes> {
         abort!(
             USR_ILLEGAL_STATE,
             "create miner exit_code {:?}",
-            receipt.exit_code
+            params.clone()
         );
     }
 
-    let ret: CreateMinerReturn = RawBytes::deserialize(&receipt.return_data).unwrap();
+    let mut ret: CreateMinerReturn = RawBytes::deserialize(&receipt.return_data).unwrap();
+    ret.out = params;
+
     Some(RawBytes::serialize(&ret).unwrap())
 }
 
@@ -529,12 +521,7 @@ pub fn take_owner(params: u32) -> Option<RawBytes> {
 
     let send_params = RawBytes::serialize(new_owner).unwrap();
 
-    let receipt = fvm_sdk::send::send(
-        &miner_id,
-        23,
-        send_params,
-        TokenAmount::from_atto(0),
-    );
+    let receipt = fvm_sdk::send::send(&miner_id, 23, send_params, TokenAmount::from_atto(0));
 
     if receipt.is_err() {
         abort!(
@@ -556,4 +543,83 @@ pub fn take_owner(params: u32) -> Option<RawBytes> {
 
     let ret = to_vec(format!("ChangeOwner {:?} -> {:?}", miner_id, new_owner).as_str()).unwrap();
     Some(RawBytes::new(ret))
+}
+
+#[cfg(test)]
+mod test {
+    use base64::decode;
+    use cid::Cid;
+    use fvm_ipld_encoding::RawBytes;
+
+    ////////////////// encode
+    ///
+    // #[test]
+    // fn encode_create_miner_params() {
+    //     let params = PeerId::from_str("12D3KooWBRqtxhJCtiLmCwKgAQozJtdGinEDdJGoS5oHw7vCjMGc")
+    //         .unwrap()
+    //         .to_bytes();
+    //     let params: super::CreateMinerParams = super::CreateMinerParams {
+    //         owner: Address::new_id(100),
+    //         worker: Address::new_id(100),
+    //         window_post_proof_type: RegisteredPoStProof::StackedDRGWindow2KiBV1,
+    //         peer: encode(params),
+    //         multiaddrs: vec![],
+    //     };
+
+    //     println!(
+    //         "create miner params {:?}",
+    //         base64::encode(RawBytes::serialize(params).unwrap().bytes())
+    //     );
+    // }
+
+    #[test]
+    fn simple() {
+        let people = "Rustaceans";
+        println!("{people}-{}", format!("Hello {people}!"));
+    }
+
+    #[test]
+    fn decode_actor_result() {
+        // eBxIZWxsbyB3b3JsZCAxMDAvMTAwLzEwMDEgIzEh => Hello world 100/100/1001 #1!
+        let params = RawBytes::new(decode("eBxIZWxsbyB3b3JsZCAxMDAvMTAwLzEwMDEgIzEh").unwrap());
+        println!("{:?}", params.deserialize::<String>().unwrap());
+    }
+
+    #[test]
+    fn decode_cid() {
+        // AXGg5AIgieQ4WRLcszZ0PVsJEwtyM7+ZCo2wfRfVCiy7fJNS17g=
+        // => bafy2bzacece6ioczclolgntuhvnqseyloiz37gikrwyh2f6vbiwlw7etkll3q
+        let params =
+            RawBytes::new(decode("AXGg5AIgieQ4WRLcszZ0PVsJEwtyM7+ZCo2wfRfVCiy7fJNS17g=").unwrap());
+
+        println!("{:?}", params.bytes());
+
+        let _cid = Cid::try_from(params.bytes());
+        match _cid {
+            Ok(info) => println!("decode cid {:?}", info),
+            Err(err) => println!("decode cid error{:?}", err),
+        };
+    }
+
+    // lotus chain invoke t01001 15 hUMA6AdDAOgHBlgmACQIARIgMAuWh+7R9XMi0RKVhqAYQ38gJex/HGAp+1jvhkwkRPaA
+    #[test]
+    fn decode_create_miner_params() {
+        let params = RawBytes::new(
+            decode("hUMA6AdDAOgHBVgmACQIARIgfgFSsbUF+lgzFx1jkUmdJ2RR49XFrhJAUTThjZsxwBiA").unwrap(),
+        );
+
+        println!(
+            "{:?}",
+            params.deserialize::<super::CreateMinerParams>().unwrap()
+        );
+    }
+
+    // #[test]
+    // fn decode_return_data() {
+    //     let params = RawBytes::new(decode("gkMA6wdVAhyo4Gl+ozVW/S2NiFl7ez22f2GI").unwrap());
+    //     println!(
+    //         "{:?}",
+    //         params.deserialize::<super::CreateMinerReturn>().unwrap()
+    //     );
+    // }
 }
