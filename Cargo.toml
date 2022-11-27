@@ -11,16 +11,16 @@ serde_tuple = "0.5"
 anyhow = "1.0.56"
 base64 = "0.13.1"
 
-fvm_sdk = { version = "3.0.0-alpha.8", path = "../ref-fvm/sdk" }
-fvm_shared = { version = "3.0.0-alpha.8", path = "../ref-fvm/shared" }
-fvm_ipld_encoding = { version = "0.3.0", path = "../ref-fvm/ipld/encoding" }
-fvm_ipld_blockstore = { version = "0.1.1", path = "../ref-fvm/ipld/blockstore" }
-fvm_ipld_hamt = { version = "0.6.0", path = "../ref-fvm/ipld/hamt" }
+fvm_sdk = { git = "https://github.com/filecoin-project/ref-fvm.git", version = "3.0.0-alpha.8" }
+fvm_shared = { git = "https://github.com/filecoin-project/ref-fvm.git", version = "3.0.0-alpha.8" }
+fvm_ipld_encoding = { git = "https://github.com/filecoin-project/ref-fvm.git", version = "0.3.0" }
+fvm_ipld_blockstore = { git = "https://github.com/filecoin-project/ref-fvm.git", version = "0.1.1" }
+fvm_ipld_hamt = { git = "https://github.com/filecoin-project/ref-fvm.git", version = "0.6.0" }
 # fil-actors-runtime = { package = "fil_builtin_actors_bundle", git = "https://github.com/filecoin-project/builtin-actors", branch = "next", features = ["m2-native"] }
 
 [dev-dependencies]
-fvm_sdk = { version = "3.0.0-alpha.8", path = "../ref-fvm/sdk" }
-fvm_ipld_hamt = { version = "0.6.0", path = "../ref-fvm/ipld/hamt" }
+fvm_sdk = { git = "https://github.com/filecoin-project/ref-fvm.git", version = "3.0.0-alpha.8" }
+fvm_ipld_hamt = { git = "https://github.com/filecoin-project/ref-fvm.git", version = "0.6.0" }
 
 libsecp256k1 = { version = "0.7" }
 rand = "0.8"
