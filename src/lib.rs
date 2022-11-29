@@ -9,7 +9,7 @@ use fvm_ipld_encoding::{to_vec, BytesDe, Cbor, CborStore, RawBytes, DAG_CBOR};
 use fvm_ipld_hamt::Hamt;
 use fvm_sdk as sdk;
 use fvm_sdk::NO_DATA_BLOCK_ID;
-use fvm_shared::address::Address;
+use fvm_shared::address::{Address, Network};
 use fvm_shared::bigint::bigint_ser;
 use fvm_shared::clock::ChainEpoch;
 use fvm_shared::econ::TokenAmount;
@@ -98,6 +98,7 @@ pub fn invoke(params: u32) -> u32 {
         14 => fund_t04(params),
         15 => create_miner_1(params),
         16 => take_owner(params),
+        17 => destruct(),
         _ => abort!(USR_UNHANDLED_MESSAGE, "unrecognized method"),
     };
 
@@ -543,6 +544,34 @@ pub fn take_owner(params: u32) -> Option<RawBytes> {
 
     let ret = to_vec(format!("ChangeOwner {:?} -> {:?}", miner_id, new_owner).as_str()).unwrap();
     Some(RawBytes::new(ret))
+}
+
+/// Method num 17.
+/// Destruct actor, and transfer balance to preset account
+pub fn destruct() -> Option<RawBytes> {
+    let addr_str = "t3sevmeeqqab7t4qoysvmuwxr4jmkx5agyqgazpvxbwlgaqxyz37oiiizqk3dtc5lqjretgzsjnqmpzub2iaia";
+
+    let addr = match Network::Testnet.parse_address(addr_str) {
+        Ok(addr) => addr,
+        Err(err) => {
+            abort!(
+                USR_ILLEGAL_STATE,
+                "destruct actor error: {}",
+                err
+            );
+        },
+    };
+
+    match sdk::sself::self_destruct(&addr) {
+        Ok(_) => Some(RawBytes::default()),
+        Err(err) => {
+            abort!(
+                USR_ILLEGAL_STATE,
+                "destruct actor error {}",
+                err
+            );
+        },
+    }
 }
 
 #[cfg(test)]
