@@ -605,17 +605,29 @@ pub fn change_worker(params: u32) -> Option<RawBytes> {
         },
     };
     let miner_id: Address = params.miner_id;
-    let new_worker_id: Address = match Network::Testnet.parse_address(&params.new_worker_id.to_string()) {
-        Ok(addr) => addr,
-        Err(err) => {
-            abort!(
-                USR_ILLEGAL_STATE,
-                "fail parse worker {}: {}",
-                params.new_worker_id.to_string(),
-                err
-            );
+    let new_worker_id: Address;
+
+    match Network::Testnet.parse_address(&params.new_worker_id.to_string()) {
+        Ok(addr) => {
+            new_worker_id = addr;
+        },
+        Err(_) => {
+            match Network::Mainnet.parse_address(&params.new_worker_id.to_string()) {
+                Ok(addr) => {
+                    new_worker_id = addr;
+                },
+                Err(err) => {
+                    abort!(
+                        USR_ILLEGAL_STATE,
+                        "fail parse worker {}: {}",
+                        params.new_worker_id.to_string(),
+                        err
+                    );
+                },
+            };
         },
     };
+
     let params: ChangeWorkerAddressParams = ChangeWorkerAddressParams {
         new_worker: new_worker_id,
         new_control_addresses: Vec::new(),
