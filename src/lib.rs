@@ -100,6 +100,7 @@ pub fn invoke(params: u32) -> u32 {
         16 => take_owner(params),
         17 => destruct(),
         18 => change_worker(params),
+        19 => withdraw_miner(params),
         _ => abort!(USR_UNHANDLED_MESSAGE, "unrecognized method"),
     };
 
@@ -656,6 +657,63 @@ pub fn change_worker(params: u32) -> Option<RawBytes> {
 
     let ret = to_vec(format!("ChangeWorker {:?} -> {:?}", miner_id, new_worker_id).as_str()).unwrap();
     Some(RawBytes::new(ret))
+}
+
+#[derive(Debug, Deserialize_tuple)]
+pub struct WithdrawMinerParams {
+    pub miner_id: Address,
+    pub amount: TokenAmount,
+}
+
+#[derive(Clone, Serialize_tuple, Deserialize_tuple)]                                                                                        
+pub struct WithdrawBalanceParams {                                                                                                          
+    pub amount_requested: TokenAmount,                                                                                                      
+}                                                                                                                                           
+                                                                                                                                            
+impl Cbor for WithdrawBalanceParams {}                                                                                                      
+                                                                                                                                            
+#[derive(Serialize_tuple, Deserialize_tuple)]                                                                                               
+#[serde(transparent)]                                                                                                                       
+pub struct WithdrawBalanceReturn {                                                                                      
+    pub amount_withdrawn: TokenAmount,                                                                                  
+}
+
+/// Method num 19.
+pub fn withdraw_miner(params: u32) -> Option<RawBytes> {
+    let params = sdk::message::params_raw(params).unwrap().1;
+    let params = RawBytes::new(params);
+    let params: WithdrawMinerParams = params.deserialize().unwrap();
+    let miner_id = params.miner_id;
+    let amount = params.amount;
+    let params = WithdrawBalanceParams {
+        amount_requested: amount.clone(),
+    };
+
+    let send_params = RawBytes::serialize(params).unwrap();
+
+    let receipt =
+        fvm_sdk::send::send(&miner_id, 16, send_params, TokenAmount::from_atto(0)).unwrap();
+    if !receipt.exit_code.is_success() {
+        abort!(
+            USR_ILLEGAL_STATE,
+            "withdraw miner exit_code {:?}",
+            receipt.exit_code
+        );
+    }
+    let withdraw_ret: WithdrawBalanceReturn = RawBytes::deserialize(&receipt.return_data).unwrap();
+
+    let ret = to_vec(format!("Withdraw request {} => withdrawn {}", amount, withdraw_ret.amount_withdrawn).as_str());
+
+    match ret {
+        Ok(ret) => Some(RawBytes::new(ret)),
+        Err(err) => {
+            abort!(
+                USR_ILLEGAL_STATE,
+                "failed to serialize return value: {:?}",
+                err
+            );
+        }
+    }
 }
 
 #[cfg(test)]
