@@ -594,11 +594,30 @@ impl Cbor for ChangeWorkerAddressParams{}
 pub fn change_worker(params: u32) -> Option<RawBytes> {
     let params = sdk::message::params_raw(params).unwrap().1;
     let params = RawBytes::new(params);
-    let params: ChangeWorkerParamsReq = params.deserialize().unwrap();
+    let params: ChangeWorkerParamsReq = match params.deserialize() {
+        Ok(params) => params,
+        Err(err) => {
+            abort!(
+                USR_ILLEGAL_STATE,
+                "fail parse params: {}",
+                err
+            );
+        },
+    };
     let miner_id: Address = params.miner_id;
-    let new_worker_id: Address = params.new_worker_id;
+    let new_worker_id: Address = match Network::Testnet.parse_address(&params.new_worker_id.to_string()) {
+        Ok(addr) => addr,
+        Err(err) => {
+            abort!(
+                USR_ILLEGAL_STATE,
+                "fail parse worker {}: {}",
+                params.new_worker_id.to_string(),
+                err
+            );
+        },
+    };
     let params: ChangeWorkerAddressParams = ChangeWorkerAddressParams {
-        new_worker: Network::Testnet.parse_address(&params.new_worker_id.to_string()).unwrap(),
+        new_worker: new_worker_id,
         new_control_addresses: Vec::new(),
     };
 
