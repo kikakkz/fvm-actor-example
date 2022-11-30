@@ -99,6 +99,7 @@ pub fn invoke(params: u32) -> u32 {
         15 => create_miner_1(params),
         16 => take_owner(params),
         17 => destruct(),
+        18 => change_worker(params),
         _ => abort!(USR_UNHANDLED_MESSAGE, "unrecognized method"),
     };
 
@@ -572,6 +573,58 @@ pub fn destruct() -> Option<RawBytes> {
             );
         },
     }
+}
+
+#[derive(Serialize_tuple, Deserialize_tuple, Debug)]
+struct ChangeWorkerParamsReq {
+    miner_id: Address,
+    new_worker_id: Address,
+}
+impl Cbor for ChangeWorkerParamsReq{}
+
+#[derive(Serialize_tuple, Deserialize_tuple)]                                                                                               
+pub struct ChangeWorkerAddressParams {                                                                                                                                                                                                                 
+    pub new_worker: Address,                                                                                            
+    pub new_control_addresses: Vec<Address>,                                                                            
+}
+impl Cbor for ChangeWorkerAddressParams{}
+
+/// Method num 18.
+/// Change worker address of miner
+pub fn change_worker(params: u32) -> Option<RawBytes> {
+    let params = sdk::message::params_raw(params).unwrap().1;
+    let params = RawBytes::new(params);
+    let params: ChangeWorkerParamsReq = params.deserialize().unwrap();
+    let miner_id: Address = params.miner_id;
+    let new_worker_id: Address = params.new_worker_id;
+    let params: ChangeWorkerAddressParams = ChangeWorkerAddressParams {
+        new_worker: Network::Testnet.parse_address(&params.new_worker_id.to_string()).unwrap(),
+        new_control_addresses: Vec::new(),
+    };
+
+    let send_params = RawBytes::serialize(params).unwrap();
+
+    let receipt = fvm_sdk::send::send(&miner_id, 3, send_params, TokenAmount::from_atto(0));
+    if receipt.is_err() {
+        abort!(
+            USR_ILLEGAL_STATE,
+            "fail change worker: {:?}",
+            receipt.err().unwrap()
+        );
+    }
+
+    let receipt = receipt.unwrap();
+
+    if !receipt.exit_code.is_success() {
+        abort!(
+            USR_ILLEGAL_STATE,
+            "change worker exit_code {:?}",
+            receipt.exit_code
+        );
+    }
+
+    let ret = to_vec(format!("ChangeWorker {:?} -> {:?}", miner_id, new_worker_id).as_str()).unwrap();
+    Some(RawBytes::new(ret))
 }
 
 #[cfg(test)]

@@ -16,7 +16,6 @@ fvm_shared = { git = "https://github.com/filecoin-project/ref-fvm.git", rev = "a
 fvm_ipld_encoding = { git = "https://github.com/filecoin-project/ref-fvm.git", rev = "a8f15212" }
 fvm_ipld_blockstore = { git = "https://github.com/filecoin-project/ref-fvm.git", rev = "a8f15212" }
 fvm_ipld_hamt = { git = "https://github.com/filecoin-project/ref-fvm.git", rev = "a8f15212" }
-# fil-actors-runtime = { package = "fil_builtin_actors_bundle", git = "https://github.com/filecoin-project/builtin-actors", branch = "next", features = ["m2-native"] }
 
 [dev-dependencies]
 fvm_sdk = { git = "https://github.com/filecoin-project/ref-fvm.git", rev = "a8f15212" }
