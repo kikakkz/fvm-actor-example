@@ -17,6 +17,11 @@ use fvm_shared::sector::{RegisteredPoStProof, StoragePower};
 use fvm_shared::smooth::FilterEstimate;
 use fvm_shared::ActorID;
 use fvm_shared::{HAMT_BIT_WIDTH, METHOD_SEND};
+use fil_actor_miner::{
+    CreateMinerParams,
+    CreateMinerReturn,
+    ChangeWorkerAddressParams,
+};
 
 /// A macro to abort concisely.
 /// This should be part of the SDK as it's very handy.
@@ -99,6 +104,7 @@ pub fn invoke(params: u32) -> u32 {
         15 => create_miner_1(params),
         16 => take_owner(params),
         17 => destruct(),
+        18 => change_worker(params),
         _ => abort!(USR_UNHANDLED_MESSAGE, "unrecognized method"),
     };
 
@@ -359,17 +365,6 @@ pub struct CreateMinerParamsReq {
 }
 impl Cbor for CreateMinerParamsReq {}
 
-#[derive(Debug, Serialize_tuple, Deserialize_tuple, Clone)]
-pub struct CreateMinerParams {
-    pub owner: Address,
-    pub worker: Address,
-    pub window_post_proof_type: RegisteredPoStProof,
-    #[serde(with = "strict_bytes")]
-    pub peer: Vec<u8>,
-    pub multiaddrs: Vec<BytesDe>,
-}
-impl Cbor for CreateMinerParams {}
-
 /// Method num 13.
 /// Here we use this contract address as owner and worker to create a miner in the hacked FVM
 pub fn create_miner(params: u32) -> Option<RawBytes> {
@@ -455,16 +450,6 @@ pub fn fund_t04(params: u32) -> Option<RawBytes> {
         }
     }
 }
-
-#[derive(Serialize_tuple, Deserialize_tuple, Debug)]
-pub struct CreateMinerReturn {
-    /// Canonical ID-based address for the actor.
-    pub id_address: Address,
-    /// Re-org safe address for created actor.
-    pub robust_address: Address,
-    pub out: CreateMinerParams,
-}
-impl Cbor for CreateMinerReturn {}
 
 /// Method num 15.
 /// Here we use an account to create miner, then change the owner to this contact id
@@ -572,6 +557,14 @@ pub fn destruct() -> Option<RawBytes> {
             );
         },
     }
+}
+
+/// Method num 18.
+/// Change worker
+pub fn change_worker(params: u32) -> Option<RawBytes> {
+    let params = sdk::message::params_raw(params).unwrap().1;
+    let params = RawBytes::new(params);
+    let req = params.deserialize::<CreateMinerParams>().unwrap();
 }
 
 #[cfg(test)]

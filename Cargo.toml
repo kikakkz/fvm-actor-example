@@ -11,16 +11,16 @@ serde_tuple = "0.5"
 anyhow = "1.0.56"
 base64 = "0.13.1"
 
-fvm_sdk = { git = "https://github.com/filecoin-project/ref-fvm.git", rev = "a8f15212" }
-fvm_shared = { git = "https://github.com/filecoin-project/ref-fvm.git", rev = "a8f15212" }
-fvm_ipld_encoding = { git = "https://github.com/filecoin-project/ref-fvm.git", rev = "a8f15212" }
-fvm_ipld_blockstore = { git = "https://github.com/filecoin-project/ref-fvm.git", rev = "a8f15212" }
-fvm_ipld_hamt = { git = "https://github.com/filecoin-project/ref-fvm.git", rev = "a8f15212" }
-# fil-actors-runtime = { package = "fil_builtin_actors_bundle", git = "https://github.com/filecoin-project/builtin-actors", branch = "next", features = ["m2-native"] }
+fvm_sdk = { git = "https://github.com/filecoin-project/ref-fvm.git", rev = "1337a88" }
+fvm_shared = { git = "https://github.com/filecoin-project/ref-fvm.git", rev = "1337a88" }
+fvm_ipld_encoding = { git = "https://github.com/filecoin-project/ref-fvm.git", rev = "1337a88" }
+fvm_ipld_blockstore = { git = "https://github.com/filecoin-project/ref-fvm.git", rev = "1337a88" }
+fvm_ipld_hamt = { git = "https://github.com/filecoin-project/ref-fvm.git", rev = "1337a88" }
+fil_actor_miner = "9.0.1"
 
 [dev-dependencies]
-fvm_sdk = { git = "https://github.com/filecoin-project/ref-fvm.git", rev = "a8f15212" }
-fvm_ipld_hamt = { git = "https://github.com/filecoin-project/ref-fvm.git", rev = "a8f15212" }
+fvm_sdk = { git = "https://github.com/filecoin-project/ref-fvm.git", rev = "1337a88" }
+fvm_ipld_hamt = { git = "https://github.com/filecoin-project/ref-fvm.git", rev = "1337a88" }
 
 libsecp256k1 = { version = "0.7" }
 rand = "0.8"
